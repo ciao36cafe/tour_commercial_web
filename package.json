@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "vite",
+    "dev": "npx vite",
     "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
-    "build": "vite build",
-    "preview": "vite preview",
+    "build": "npx vite build",
+    "preview": "npx vite preview",
     "server": "nodemon server/index.js",
     "test-db": "node server/quick-test.js",
     "view-data": "node server/view-data.js",
