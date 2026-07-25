@@ -3,14 +3,49 @@ import express from 'express';
 import cors from 'cors';
 import db from './db.js';
 
-// Import the actual route files you have
-import tourRoutes from './routes/tour.routes.js';
-import tourTemplateRoutes from './routes/tourTemplate.routes.js';
-import tourStopRoutes from './routes/tourStop.routes.js';
-import bookingRoutes from './routes/booking.routes.js';
-
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+console.log('🔄 Loading routes...');
+
+// Import routes with error handling
+let tourRoutes, tourTemplateRoutes, tourStopRoutes, bookingRoutes;
+
+try {
+  const module = await import('./routes/tour.routes.js');
+  tourRoutes = module.default;
+  console.log('✅ Tour routes loaded');
+} catch (e) {
+  console.error('❌ Tour routes failed:', e.message);
+  tourRoutes = (req, res) => res.status(404).json({ error: 'Tour routes not available' });
+}
+
+try {
+  const module = await import('./routes/tourTemplate.routes.js');
+  tourTemplateRoutes = module.default;
+  console.log('✅ Tour template routes loaded');
+} catch (e) {
+  console.error('❌ Tour template routes failed:', e.message);
+  tourTemplateRoutes = (req, res) => res.status(404).json({ error: 'Tour template routes not available' });
+}
+
+try {
+  const module = await import('./routes/tourStop.routes.js');
+  tourStopRoutes = module.default;
+  console.log('✅ Tour stop routes loaded');
+} catch (e) {
+  console.error('❌ Tour stop routes failed:', e.message);
+  tourStopRoutes = (req, res) => res.status(404).json({ error: 'Tour stop routes not available' });
+}
+
+try {
+  const module = await import('./routes/booking.routes.js');
+  bookingRoutes = module.default;
+  console.log('✅ Booking routes loaded');
+} catch (e) {
+  console.error('❌ Booking routes failed:', e.message);
+  bookingRoutes = (req, res) => res.status(404).json({ error: 'Booking routes not available' });
+}
 
 // Middleware
 app.use(cors());
@@ -24,10 +59,13 @@ app.use('/api/bookings', bookingRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', mongodb: db.isConnectedToDB() ? 'connected' : 'disconnected' });
+  res.json({ 
+    status: 'ok', 
+    mongodb: db.isConnectedToDB ? 'connected' : 'disconnected' 
+  });
 });
 
-// Debug endpoint - log incoming data
+// Debug endpoint
 app.post('/api/debug', (req, res) => {
   console.log('Debug request body:', JSON.stringify(req.body, null, 2));
   res.json({ received: true, data: req.body });
