@@ -982,7 +982,7 @@ function BookingCta() {
         </div>
         <div className="mt-10 flex flex-wrap justify-center gap-8">
           <a href="mailto:hello@siamjourneys.com" className="flex items-center gap-2 text-[#FAF7F2]/55 text-[13px] hover:text-[#FAF7F2] transition-colors"><Mail size={13} />hello@siamjourneys.com</a>
-          <a href="tel:+6621234567" className="flex items-center gap-2 text-[#FAF7F2]/55 text-[13px] hover:text-[#FAF7F2] transition-colors"><Phone size={13} />+66 2 123 4567</a>
+          <a href="tel:+6692 475 9669" className="flex items-center gap-2 text-[#FAF7F2]/55 text-[13px] hover:text-[#FAF7F2] transition-colors"><Phone size={13} />+6692 475 9669</a>
           <span className="flex items-center gap-2 text-[#FAF7F2]/55 text-[13px]"><MapPin size={13} />Phra Nakhon, Bangkok 10200</span>
         </div>
       </div>

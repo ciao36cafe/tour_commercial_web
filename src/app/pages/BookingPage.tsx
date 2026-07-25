@@ -674,7 +674,7 @@ export function BookingPage() {
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         className="w-full border border-border px-3 py-2.5 text-[14px] text-[#2A2824] focus:outline-none focus:border-[#B8952A] transition-colors bg-transparent"
-                        placeholder="+66 89 123 4567"
+                        placeholder="+66 92 475 9669"
                       />
                     </div>
                     <div>
@@ -712,7 +712,7 @@ export function BookingPage() {
                   </div>
 
                   {/* API Test Button - Development Only */}
-                  {import.meta.env.DEV && (
+                  {/*import.meta.env.DEV && (
                     <div className="mb-4 p-4 bg-gray-100 border border-gray-300 rounded">
                       <button
                         type="button"
@@ -732,7 +732,7 @@ export function BookingPage() {
                         🔍 Test API Connection
                       </button>
                     </div>
-                  )}
+                  )*/}
 
                   <button
                     type="button"

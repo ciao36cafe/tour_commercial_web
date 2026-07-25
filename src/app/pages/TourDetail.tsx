@@ -763,8 +763,8 @@ export function TourDetail() {
                 <div>
                   <p className="text-[13px] font-medium text-[#2A2824]">Need help choosing?</p>
                   <p className="text-[12px] text-[#7A6E60] mt-0.5">Our team responds within 2 hours.</p>
-                  <a href="tel:+6621234567" className="text-[12px] text-[#2D4A3E] hover:text-[#B8952A] transition-colors mt-1 block">
-                    +66 2 123 4567
+                  <a href="tel:+66924759669" className="text-[12px] text-[#2D4A3E] hover:text-[#B8952A] transition-colors mt-1 block">
+                    +6692 475 9669
                   </a>
                 </div>
               </div>

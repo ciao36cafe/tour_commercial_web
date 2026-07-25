@@ -17,6 +17,7 @@ const SERIF = "'Playfair Display', Georgia, serif";
 // ============ TYPES ============
 interface TourTemplate {
   _id: string;
+  id?: string; // Added for compatibility
   name: string;
   description: string;
   tagline: string;
@@ -91,10 +92,13 @@ function CategoryFilter({
 function TourCard({ tour }: { tour: TourTemplate }) {
   const navigate = useNavigate();
 
+  // Use _id or id for navigation
+  const tourId = tour._id || tour.id;
+
   return (
     <div 
       className="group bg-[#FFFDF8] border border-border hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden"
-      onClick={() => navigate(`/tour/${tour._id}`)}
+      onClick={() => navigate(`/tours/${tourId}`)} // Changed from /tour/ to /tours/
     >
       {/* Image */}
       <div className="relative overflow-hidden bg-[#C8BBA6]" style={{ aspectRatio: "16/10" }}>
@@ -177,7 +181,7 @@ function TourCard({ tour }: { tour: TourTemplate }) {
             className="flex items-center gap-1 text-[11px] tracking-[0.12em] uppercase text-[#B8952A] hover:text-[#A47F22] transition-colors group-hover:gap-2"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/tour/${tour._id}`);
+              navigate(`/tours/${tourId}`); // Changed from /tour/ to /tours/
             }}
           >
             View Details
@@ -224,10 +228,8 @@ export function TourList() {
       setLoading(true);
       setError(null);
       
-      // IMPORTANT: This is the URL that needs to match your server
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
       
-      // Build query params
       const params = new URLSearchParams();
       params.append('page', page.toString());
       params.append('limit', '20');
@@ -244,10 +246,8 @@ export function TourList() {
         params.append('search', searchQuery.trim());
       }
       
-      // Update URL params
       setSearchParams(params);
       
-      // ✅ CORRECT ENDPOINT - matches your server route
       const response = await fetch(`${API_URL}/api/tour-templates?${params.toString()}`);
       
       if (!response.ok) {
@@ -260,11 +260,9 @@ export function TourList() {
         setTours(result.data);
         setPagination(result.pagination);
         
-        // Set categories from the response
         if (result.categories) {
           setCategories(result.categories);
         } else {
-          // Fallback: extract from tours
           const uniqueCategories = [...new Set(result.data.map((t: TourTemplate) => t.category))].filter(Boolean);
           setCategories(uniqueCategories);
         }
@@ -287,7 +285,6 @@ export function TourList() {
     fetchTours(page);
   }, [selectedCategory, showActiveOnly]);
 
-  // Handle search with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.trim() || searchQuery === '') {
@@ -325,7 +322,6 @@ export function TourList() {
   // ============ RENDER ============
   return (
     <>
-      {/* SEO */}
       <title>Explore Our Tours | Siam Journeys Bangkok</title>
       <meta name="description" content="Discover authentic Bangkok experiences with our curated tours. Book your adventure today." />
 
@@ -470,7 +466,7 @@ export function TourList() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {tours.map((tour) => (
-                <TourCard key={tour._id} tour={tour} />
+                <TourCard key={tour._id || tour.id} tour={tour} />
               ))}
             </div>
 
