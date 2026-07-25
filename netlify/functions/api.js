@@ -1,47 +1,57 @@
 import 'dotenv/config';
 import serverless from 'serverless-http';
 
-// ✅ Use a simpler approach - load the app on first request
-let cachedApp = null;
-let cachedHandler = null;
+let app = null;
+let isLoaded = false;
 
-export const handler = async (event, context) => {
+// Load the app
+const loadApp = async () => {
   try {
-    // Load app on first request (cold start)
-    if (!cachedApp) {
-      console.log('🔧 Loading app for the first time...');
-      
-      // Import the app
-      const appModule = await import('../../server/index.js');
-      
-      // Try different export formats
-      let app = appModule.default || appModule;
-      
-      // If app is an object with a default property that's a function
-      if (app && typeof app === 'object' && app.default && typeof app.default === 'function') {
-        app = app.default;
-      }
-      
-      console.log('📊 app type:', typeof app);
-      
-      if (typeof app !== 'function') {
-        throw new Error(`App is not a function, it's a ${typeof app}`);
-      }
-      
-      cachedApp = app;
-      cachedHandler = serverless(app);
-      console.log('✅ App loaded and handler created');
+    console.log('🔄 Loading app...');
+    const appModule = await import('../../server/index.js');
+    app = appModule.default || appModule;
+    
+    if (app && typeof app === 'object' && app.default && typeof app.default === 'function') {
+      app = app.default;
     }
     
-    return cachedHandler(event, context);
+    console.log('📊 app type:', typeof app);
+    isLoaded = true;
+    
+    if (typeof app !== 'function') {
+      console.error('❌ App is not a function');
+      throw new Error('App is not a valid Express application');
+    }
+    
+    console.log('✅ App loaded successfully');
   } catch (error) {
-    console.error('❌ Handler error:', error.message);
+    console.error('❌ Failed to load app:', error.message);
+    app = null;
+    isLoaded = true;
+  }
+};
+
+// Start loading the app (no await at top level)
+loadApp();
+
+// Export the handler
+export const handler = async (event, context) => {
+  // Wait for app to load if not ready
+  if (!isLoaded) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    if (!isLoaded) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+  
+  if (!app || typeof app !== 'function') {
     return {
       statusCode: 500,
-      body: JSON.stringify({ 
-        error: 'Internal server error',
-        message: error.message
-      })
+      body: JSON.stringify({ error: 'App not available' })
     };
   }
+  
+  // Create handler only when needed
+  const handler = serverless(app);
+  return handler(event, context);
 };
