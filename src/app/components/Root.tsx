@@ -1,6 +1,6 @@
 // src/components/Root.tsx
 import { useState, useEffect } from "react";
-import { Outlet, useLocation, useNavigate } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Instagram, Facebook, Youtube } from "lucide-react";
 
 const SERIF = "'Playfair Display', Georgia, serif";

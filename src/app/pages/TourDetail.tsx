@@ -1,6 +1,6 @@
 // TourDetail.tsx (updated with simpler sticky behavior)
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, Clock, Users, Star, Check, X, Shirt, Activity,
   UserCheck, List, Shield, ChevronDown, Phone, Calendar,
