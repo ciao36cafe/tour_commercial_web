@@ -4,7 +4,6 @@ import serverless from 'serverless-http';
 let app = null;
 let isLoaded = false;
 
-// Load the app
 const loadApp = async () => {
   try {
     console.log('🔄 Loading app...');
@@ -31,12 +30,10 @@ const loadApp = async () => {
   }
 };
 
-// Start loading the app (no await at top level)
+// ✅ Call WITHOUT await - NO top-level await!
 loadApp();
 
-// Export the handler
 export const handler = async (event, context) => {
-  // Wait for app to load if not ready
   if (!isLoaded) {
     await new Promise(resolve => setTimeout(resolve, 100));
     if (!isLoaded) {
@@ -51,7 +48,6 @@ export const handler = async (event, context) => {
     };
   }
   
-  // Create handler only when needed
   const handler = serverless(app);
   return handler(event, context);
 };

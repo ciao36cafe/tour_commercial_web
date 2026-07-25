@@ -1,111 +1,127 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import db from './db.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// ✅ Sync middleware (no async)
 app.use(cors());
 app.use(express.json());
 
-// Health check
+// ✅ Sync routes (no async)
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    mongodb: db.isConnectedToDB ? 'connected' : 'disconnected' 
+    mongodb: 'initializing...' 
   });
 });
 
-// Debug endpoint
 app.post('/api/debug', (req, res) => {
   console.log('Debug request body:', JSON.stringify(req.body, null, 2));
   res.json({ received: true, data: req.body });
 });
 
-// ✅ ALL async code inside this function - NO top-level await
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Test route works!' });
+});
+
+// ✅ ALL async code INSIDE this ONE function
 async function initializeApp() {
   console.log('🔄 Initializing app...');
   
+  // 1. Load db
+  let db;
   try {
-    // Connect to database
-    await db.connect();
-    console.log('✅ Database connected');
-    
-    // Load routes using dynamic import
-    console.log('🔄 Loading routes...');
-    
-    try {
-      const module = await import('./routes/tour.routes.js');
-      const tourRoutes = module.default || module;
-      if (typeof tourRoutes === 'function') {
-        app.use('/api/tours', tourRoutes);
-        console.log('✅ Tour routes loaded');
-      } else {
-        console.warn('⚠️ Tour routes not a function');
-      }
-    } catch (e) {
-      console.error('❌ Tour routes failed:', e.message);
-    }
+    const dbModule = await import('./db.js');
+    db = dbModule.default || dbModule;
+    console.log('📊 db type:', typeof db);
+    console.log('📊 db.connect exists:', typeof db.connect === 'function');
+  } catch (error) {
+    console.error('❌ Failed to load db:', error.message);
+    db = {
+      connect: async () => console.log('⚠️ Fallback connect'),
+      isConnectedToDB: () => false,
+    };
+  }
 
-    try {
-      const module = await import('./routes/tourTemplate.routes.js');
-      const tourTemplateRoutes = module.default || module;
-      if (typeof tourTemplateRoutes === 'function') {
-        app.use('/api/tour-templates', tourTemplateRoutes);
-        console.log('✅ Tour template routes loaded');
-      } else {
-        console.warn('⚠️ Tour template routes not a function');
-      }
-    } catch (e) {
-      console.error('❌ Tour template routes failed:', e.message);
-    }
+  // 2. Update health check
+  app.get('/api/health', (req, res) => {
+    res.json({ 
+      status: 'ok', 
+      mongodb: typeof db.isConnectedToDB === 'function' ? (db.isConnectedToDB() ? 'connected' : 'disconnected') : 'unknown'
+    });
+  });
 
-    try {
-      const module = await import('./routes/tourStop.routes.js');
-      const tourStopRoutes = module.default || module;
-      if (typeof tourStopRoutes === 'function') {
-        app.use('/api/tour-stops', tourStopRoutes);
-        console.log('✅ Tour stop routes loaded');
-      } else {
-        console.warn('⚠️ Tour stop routes not a function');
-      }
-    } catch (e) {
-      console.error('❌ Tour stop routes failed:', e.message);
-    }
-
-    try {
-      const module = await import('./routes/booking.routes.js');
-      const bookingRoutes = module.default || module;
-      if (typeof bookingRoutes === 'function') {
-        app.use('/api/bookings', bookingRoutes);
-        console.log('✅ Booking routes loaded');
-      } else {
-        console.warn('⚠️ Booking routes not a function');
-      }
-    } catch (e) {
-      console.error('❌ Booking routes failed:', e.message);
-    }
-    
-    console.log('✅ All routes mounted');
-    
-    // Start server (only in development)
-    if (process.env.NODE_ENV !== 'production') {
-      app.listen(PORT, () => {
-        console.log(`🚀 API server running at http://localhost:${PORT}`);
-      });
+  // 3. Connect to database
+  try {
+    if (typeof db.connect === 'function') {
+      console.log('🔄 Connecting to database...');
+      await db.connect();
+      console.log('✅ Database connected');
     }
   } catch (error) {
-    console.error('❌ Failed to initialize app:', error.message);
-    if (process.env.NODE_ENV !== 'production') {
-      process.exit(1);
+    console.error('❌ Database connection failed:', error.message);
+  }
+  
+  // 4. Load routes using require
+  console.log('🔄 Loading routes...');
+  
+  // Use import() for routes (inside async function)
+  try {
+    const module = await import('./routes/tour.routes.js');
+    const tourRoutes = module.default || module;
+    if (typeof tourRoutes === 'function') {
+      app.use('/api/tours', tourRoutes);
+      console.log('✅ Tour routes loaded');
     }
+  } catch (e) {
+    console.error('❌ Tour routes failed:', e.message);
+  }
+
+  try {
+    const module = await import('./routes/tourTemplate.routes.js');
+    const tourTemplateRoutes = module.default || module;
+    if (typeof tourTemplateRoutes === 'function') {
+      app.use('/api/tour-templates', tourTemplateRoutes);
+      console.log('✅ Tour template routes loaded');
+    }
+  } catch (e) {
+    console.error('❌ Tour template routes failed:', e.message);
+  }
+
+  try {
+    const module = await import('./routes/tourStop.routes.js');
+    const tourStopRoutes = module.default || module;
+    if (typeof tourStopRoutes === 'function') {
+      app.use('/api/tour-stops', tourStopRoutes);
+      console.log('✅ Tour stop routes loaded');
+    }
+  } catch (e) {
+    console.error('❌ Tour stop routes failed:', e.message);
+  }
+
+  try {
+    const module = await import('./routes/booking.routes.js');
+    const bookingRoutes = module.default || module;
+    if (typeof bookingRoutes === 'function') {
+      app.use('/api/bookings', bookingRoutes);
+      console.log('✅ Booking routes loaded');
+    }
+  } catch (e) {
+    console.error('❌ Booking routes failed:', e.message);
+  }
+  
+  console.log('✅ All routes mounted');
+  
+  if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+      console.log(`🚀 API server running at http://localhost:${PORT}`);
+    });
   }
 }
 
-// ✅ Call WITHOUT await at top level
+// ✅ Call WITHOUT await - NO top-level await!
 initializeApp();
 
-// ✅ Export for Netlify Functions
 export default app;
