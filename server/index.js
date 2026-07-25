@@ -6,56 +6,9 @@ import db from './db.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-console.log('🔄 Loading routes...');
-
-// Import routes with error handling
-let tourRoutes, tourTemplateRoutes, tourStopRoutes, bookingRoutes;
-
-try {
-  const module = await import('./routes/tour.routes.js');
-  tourRoutes = module.default;
-  console.log('✅ Tour routes loaded');
-} catch (e) {
-  console.error('❌ Tour routes failed:', e.message);
-  tourRoutes = (req, res) => res.status(404).json({ error: 'Tour routes not available' });
-}
-
-try {
-  const module = await import('./routes/tourTemplate.routes.js');
-  tourTemplateRoutes = module.default;
-  console.log('✅ Tour template routes loaded');
-} catch (e) {
-  console.error('❌ Tour template routes failed:', e.message);
-  tourTemplateRoutes = (req, res) => res.status(404).json({ error: 'Tour template routes not available' });
-}
-
-try {
-  const module = await import('./routes/tourStop.routes.js');
-  tourStopRoutes = module.default;
-  console.log('✅ Tour stop routes loaded');
-} catch (e) {
-  console.error('❌ Tour stop routes failed:', e.message);
-  tourStopRoutes = (req, res) => res.status(404).json({ error: 'Tour stop routes not available' });
-}
-
-try {
-  const module = await import('./routes/booking.routes.js');
-  bookingRoutes = module.default;
-  console.log('✅ Booking routes loaded');
-} catch (e) {
-  console.error('❌ Booking routes failed:', e.message);
-  bookingRoutes = (req, res) => res.status(404).json({ error: 'Booking routes not available' });
-}
-
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-// Mount routers
-app.use('/api/tours', tourRoutes);
-app.use('/api/tour-templates', tourTemplateRoutes);
-app.use('/api/tour-stops', tourStopRoutes);
-app.use('/api/bookings', bookingRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -71,23 +24,83 @@ app.post('/api/debug', (req, res) => {
   res.json({ received: true, data: req.body });
 });
 
-// Connect to database and start server
-async function start() {
+// Function to load routes
+async function loadRoutes() {
+  console.log('🔄 Loading routes...');
+  
+  let tourRoutes, tourTemplateRoutes, tourStopRoutes, bookingRoutes;
+
   try {
+    const module = await import('./routes/tour.routes.js');
+    tourRoutes = module.default;
+    console.log('✅ Tour routes loaded');
+  } catch (e) {
+    console.error('❌ Tour routes failed:', e.message);
+    tourRoutes = (req, res) => res.status(404).json({ error: 'Tour routes not available' });
+  }
+
+  try {
+    const module = await import('./routes/tourTemplate.routes.js');
+    tourTemplateRoutes = module.default;
+    console.log('✅ Tour template routes loaded');
+  } catch (e) {
+    console.error('❌ Tour template routes failed:', e.message);
+    tourTemplateRoutes = (req, res) => res.status(404).json({ error: 'Tour template routes not available' });
+  }
+
+  try {
+    const module = await import('./routes/tourStop.routes.js');
+    tourStopRoutes = module.default;
+    console.log('✅ Tour stop routes loaded');
+  } catch (e) {
+    console.error('❌ Tour stop routes failed:', e.message);
+    tourStopRoutes = (req, res) => res.status(404).json({ error: 'Tour stop routes not available' });
+  }
+
+  try {
+    const module = await import('./routes/booking.routes.js');
+    bookingRoutes = module.default;
+    console.log('✅ Booking routes loaded');
+  } catch (e) {
+    console.error('❌ Booking routes failed:', e.message);
+    bookingRoutes = (req, res) => res.status(404).json({ error: 'Booking routes not available' });
+  }
+
+  // Mount routers
+  app.use('/api/tours', tourRoutes);
+  app.use('/api/tour-templates', tourTemplateRoutes);
+  app.use('/api/tour-stops', tourStopRoutes);
+  app.use('/api/bookings', bookingRoutes);
+  
+  console.log('✅ All routes mounted');
+}
+
+// ✅ WRAP EVERYTHING in an async function
+async function initializeApp() {
+  try {
+    // Connect to database
     await db.connect();
-    app.listen(PORT, () => {
-      console.log(`API server running at http://localhost:${PORT}`);
-    });
+    console.log('✅ Database connected');
+    
+    // Load routes
+    await loadRoutes();
+    
+    // Start server (only in development)
+    if (process.env.NODE_ENV !== 'production') {
+      app.listen(PORT, () => {
+        console.log(`🚀 API server running at http://localhost:${PORT}`);
+      });
+    }
   } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
+    console.error('❌ Failed to initialize app:', error);
+    if (process.env.NODE_ENV !== 'production') {
+      process.exit(1);
+    }
   }
 }
 
-// For local development
-if (process.env.NODE_ENV !== 'production') {
-  start();
-}
+// ✅ Call WITHOUT await at top level
+initializeApp();
 
-// Export for Netlify Functions
+// ✅ Export for Netlify Functions
 export default app;
