@@ -1,12 +1,13 @@
 [build]
   base = "/"
-  command = "npm install --legacy-peer-deps && npm run build"
+  command = "npm install --legacy-peer-deps --include=dev && npm run build"
   publish = "dist"
   functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20"
   NPM_VERSION = "10"
+  NODE_ENV = "development"
 
 [dev]
   command = "npm run dev:all"
@@ -14,13 +15,11 @@
   port = 8888
   framework = "vite"
 
-# API redirect
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
 
-# SPA fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"
