@@ -228,7 +228,7 @@ export function TourList() {
       setLoading(true);
       setError(null);
       
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+      const API_URL = import.meta.env.PROD ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:5001');
       
       const params = new URLSearchParams();
       params.append('page', page.toString());

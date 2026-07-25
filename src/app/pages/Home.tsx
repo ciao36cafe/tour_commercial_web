@@ -516,7 +516,7 @@ function AvailableTours() {
       setError(null);
       
       // Use the correct API endpoint
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+      const API_URL = import.meta.env.PROD ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:5001');
       const response = await fetch(`${API_URL}/api/tour-templates?active=true`);
       
       if (!response.ok) {
