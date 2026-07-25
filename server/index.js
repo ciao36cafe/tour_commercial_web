@@ -1,7 +1,14 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import db from './db.js';
+
+// ✅ Use require for db - covers all export cases
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const db = require('./db.js').default || require('./db.js');
+
+console.log('📊 db type:', typeof db);
+console.log('📊 db.connect exists:', typeof db.connect === 'function');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -75,7 +82,7 @@ async function loadRoutes() {
   console.log('✅ All routes mounted');
 }
 
-// ✅ WRAP EVERYTHING in an async function
+// Initialize the app
 async function initializeApp() {
   try {
     // Connect to database
@@ -99,8 +106,8 @@ async function initializeApp() {
   }
 }
 
-// ✅ Call WITHOUT await at top level
+// Call WITHOUT await at top level
 initializeApp();
 
-// ✅ Export for Netlify Functions
+// Export for Netlify Functions
 export default app;
