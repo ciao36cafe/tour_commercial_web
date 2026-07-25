@@ -49,7 +49,9 @@
     "@radix-ui/react-toggle": "1.1.2",
     "@radix-ui/react-toggle-group": "1.1.2",
     "@radix-ui/react-tooltip": "1.1.8",
+    "@tailwindcss/vite": "^4.3.3",
     "@thaibulksms/tbs": "^0.1.2",
+    "@vitejs/plugin-react": "^6.0.4",
     "canvas-confetti": "1.9.4",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
@@ -66,11 +68,11 @@
     "motion": "12.23.24",
     "next-themes": "0.4.6",
     "nodemailer": "^9.0.3",
-    "react": "18.3.1",
+    "react": "^18.3.1",
     "react-day-picker": "8.10.1",
     "react-dnd": "16.0.1",
     "react-dnd-html5-backend": "16.0.1",
-    "react-dom": "18.3.1",
+    "react-dom": "^18.3.1",
     "react-hook-form": "7.55.0",
     "react-popper": "2.3.0",
     "react-resizable-panels": "2.1.7",
@@ -82,15 +84,13 @@
     "sonner": "2.0.3",
     "tailwind-merge": "3.2.0",
     "tw-animate-css": "1.3.8",
-    "vaul": "1.1.2"
+    "vaul": "1.1.2",
+    "vite": "^8.1.5"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.1.12",
-    "@vitejs/plugin-react": "^4.7.0",
     "concurrently": "^8.2.2",
     "nodemon": "^3.1.14",
-    "tailwindcss": "4.1.12",
-    "vite": "^6.4.3"
+    "tailwindcss": "4.1.12"
   },
   "peerDependencies": {
     "react": "^18.3.1",
