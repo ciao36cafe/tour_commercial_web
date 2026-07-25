@@ -2,16 +2,23 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 
-// ✅ Use require for db - covers all export cases
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const db = require('./db.js').default || require('./db.js');
-
-console.log('📊 db type:', typeof db);
-console.log('📊 db.connect exists:', typeof db.connect === 'function');
-
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ✅ Dynamic import for db - works everywhere
+let db;
+try {
+  const dbModule = await import('./db.js');
+  db = dbModule.default || dbModule;
+  console.log('✅ Database module loaded');
+  console.log('📊 db.connect exists:', typeof db.connect === 'function');
+} catch (e) {
+  console.error('❌ Failed to load db.js:', e.message);
+  db = {
+    connect: async () => console.log('⚠️ Mock database connect'),
+    isConnectedToDB: () => false
+  };
+}
 
 // Middleware
 app.use(cors());
