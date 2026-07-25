@@ -5,41 +5,61 @@ import cors from 'cors';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ✅ Dynamic import for db - works everywhere
-let db;
-try {
-  const dbModule = await import('./db.js');
-  db = dbModule.default || dbModule;
-  console.log('✅ Database module loaded');
-  console.log('📊 db.connect exists:', typeof db.connect === 'function');
-} catch (e) {
-  console.error('❌ Failed to load db.js:', e.message);
-  db = {
-    connect: async () => console.log('⚠️ Mock database connect'),
-    isConnectedToDB: () => false
-  };
-}
-
-// Middleware
+// ✅ Middleware (no async needed)
 app.use(cors());
 app.use(express.json());
 
-// Health check
+// ✅ Health check (no async needed)
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    mongodb: db.isConnectedToDB ? 'connected' : 'disconnected' 
+    mongodb: 'connecting...' 
   });
 });
 
-// Debug endpoint
+// ✅ Debug endpoint (no async needed)
 app.post('/api/debug', (req, res) => {
   console.log('Debug request body:', JSON.stringify(req.body, null, 2));
   res.json({ received: true, data: req.body });
 });
 
-// Function to load routes
-async function loadRoutes() {
+// ✅ ALL async code goes inside this function
+async function initializeApp() {
+  console.log('🔄 Initializing app...');
+  
+  // Load db
+  let db;
+  try {
+    const dbModule = await import('./db.js');
+    db = dbModule.default || dbModule;
+    console.log('✅ Database module loaded');
+    console.log('📊 db.connect exists:', typeof db.connect === 'function');
+  } catch (e) {
+    console.error('❌ Failed to load db.js:', e.message);
+    db = {
+      connect: async () => console.log('⚠️ Mock database connect'),
+      isConnectedToDB: () => false
+    };
+  }
+
+  // Update health check with db status
+  app.get('/api/health', (req, res) => {
+    res.json({ 
+      status: 'ok', 
+      mongodb: db.isConnectedToDB ? 'connected' : 'disconnected' 
+    });
+  });
+
+  // Connect to database
+  try {
+    await db.connect();
+    console.log('✅ Database connected');
+  } catch (error) {
+    console.error('❌ Database connection failed:', error.message);
+    // Continue without database (for testing)
+  }
+
+  // Load routes
   console.log('🔄 Loading routes...');
   
   let tourRoutes, tourTemplateRoutes, tourStopRoutes, bookingRoutes;
@@ -87,34 +107,17 @@ async function loadRoutes() {
   app.use('/api/bookings', bookingRoutes);
   
   console.log('✅ All routes mounted');
-}
 
-// Initialize the app
-async function initializeApp() {
-  try {
-    // Connect to database
-    await db.connect();
-    console.log('✅ Database connected');
-    
-    // Load routes
-    await loadRoutes();
-    
-    // Start server (only in development)
-    if (process.env.NODE_ENV !== 'production') {
-      app.listen(PORT, () => {
-        console.log(`🚀 API server running at http://localhost:${PORT}`);
-      });
-    }
-  } catch (error) {
-    console.error('❌ Failed to initialize app:', error);
-    if (process.env.NODE_ENV !== 'production') {
-      process.exit(1);
-    }
+  // Start server (only in development)
+  if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+      console.log(`🚀 API server running at http://localhost:${PORT}`);
+    });
   }
 }
 
-// Call WITHOUT await at top level
+// ✅ Call WITHOUT await at top level
 initializeApp();
 
-// Export for Netlify Functions
+// ✅ Export for Netlify Functions
 export default app;
