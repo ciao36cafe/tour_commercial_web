@@ -1,0 +1,842 @@
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
+import {
+  ArrowRight, Shield, Users, GraduationCap, Award, Star,
+  Phone, Mail, MapPin, ChevronDown, Compass, Clock, Check,
+} from "lucide-react";
+import { motion } from "motion/react";
+import { TOURS, CATEGORIES, type Category, type Tour } from "../data/tours";
+
+// ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
+const SERIF = "'Playfair Display', Georgia, serif";
+
+// ─── SHARED DATA ──────────────────────────────────────────────────────────────
+const TRUST_ITEMS = [
+  { icon: Shield, label: "Fully Insured" },
+  { icon: Users, label: "Licensed Cultural Guides" },
+  { icon: Award, label: "Convoy Safety System" },
+  { icon: GraduationCap, label: "Curriculum Certified" },
+  { icon: Compass, label: "Family-Owned Since 2008" },
+];
+
+const JOURNEYS = [
+  {
+    id: "heritage",
+    tab: "The Heritage Trail",
+    badge: "Cultural Immersion · 4 Hours",
+    headline: "Where Ancient Bangkok Still Breathes",
+    body: "Rattan lanterns at dawn. The scent of jasmine garlands at Pak Khlong Talat. A monk's saffron robe catching the early light at Wat Pho. Our Heritage Trail weaves through Rattanakosin Island — the old royal quarter — along lanes that have not changed in two centuries.",
+    highlights: [
+      "Rattanakosin Island & Grand Palace District",
+      "Wat Pho & the Reclining Buddha",
+      "Pak Khlong Talat Flower Market at dawn",
+      "Authentic Thai breakfast with a local vendor family",
+    ],
+    img: "https://images.unsplash.com/photo-1776941452020-822b4901446b?w=900&h=700&fit=crop&auto=format",
+    alt: "Elaborate golden temple roof detail in Bangkok's old quarter",
+  },
+  {
+    id: "classroom",
+    tab: "The Moving Classroom",
+    badge: "Educational Programme · Half or Full Day",
+    headline: "Learning That Moves With You",
+    body: "Designed in partnership with international curriculum specialists, The Moving Classroom transforms Bangkok's streets into a living textbook. Students engage with urban planning, comparative religion, Thai culinary heritage, and sustainable economics — from within the experience itself.",
+    highlights: [
+      "IB, Cambridge & AP curriculum alignment",
+      "Pre- and post-visit teacher packs included",
+      "Licensed educator-guides with teaching credentials",
+      "Assessment-ready student reflection journals",
+    ],
+    img: "https://images.unsplash.com/photo-1563492065599-3520f775eeed?w=900&h=700&fit=crop&auto=format",
+    alt: "Orange Thai temples bathed in warm golden light",
+  },
+  {
+    id: "private",
+    tab: "The Private Grand Tour",
+    badge: "Bespoke Luxury · Full Day",
+    headline: "Bangkok, Without Compromise",
+    body: "For those who do not follow itineraries. Our Private Grand Tour is a blank canvas drawn from an intimate knowledge of the city — the hidden rooftop sanctuaries, the unmarked noodle stall, the antique map dealer in Chinatown who will stop everything for a real conversation.",
+    highlights: [
+      "Fully bespoke routing, timing, and pacing",
+      "Private chef-led market and lunch experience",
+      "Access to venues unavailable on standard tours",
+      "Chauffeured convoy with dedicated personal guide",
+    ],
+    img: "https://images.unsplash.com/photo-1595632798355-61f1a6f99c37?w=900&h=700&fit=crop&auto=format",
+    alt: "Traveller in traditional dress at a historic Bangkok temple entrance",
+  },
+];
+
+const CLASSROOM_OUTCOMES = [
+  { icon: GraduationCap, title: "Curriculum Alignment", body: "Mapped to IB, Cambridge, and AP frameworks. Assessment-ready materials included." },
+  { icon: Users, title: "Educator-Led Guides", body: "Every guide holds teaching qualifications alongside their TAT tourism licence." },
+  { icon: Compass, title: "Living Geography", body: "Urban planning and environmental studies in the field, not the classroom." },
+  { icon: Award, title: "Cultural Intelligence", body: "Structured encounters designed to build cross-cultural empathy and global citizenship." },
+  { icon: Clock, title: "Pre & Post Materials", body: "Teacher packs, student journals, and assessment rubrics for every booking." },
+  { icon: Star, title: "Flexible Scheduling", body: "Half-day, full-day, and multi-visit residency programmes available." },
+];
+
+const SAFETY_PILLARS = [
+  { icon: Shield, title: "The Convoy System", body: "Every journey operates in a structured convoy — no vehicle travels alone. A lead guide sets the pace; a sweep vehicle closes the formation." },
+  { icon: Award, title: "Licensed & Accredited", body: "All tuk-tuks pass annual Thai Transport Ministry inspection. Every guide holds a TAT licence and a first-aid certification renewed yearly." },
+  { icon: Users, title: "Emergency Protocol", body: "A dedicated emergency coordinator monitors all journeys remotely. Nearest hospital routes are pre-mapped for every itinerary." },
+  { icon: Check, title: "Comprehensive Insurance", body: "Every guest is covered by full personal accident and liability insurance from the moment of departure." },
+  { icon: Clock, title: "Traffic Intelligence", body: "Our team monitors Bangkok traffic in real time. Journey start times are calibrated to avoid peak-hour arterials." },
+  { icon: Compass, title: "Pre-Journey Briefing", body: "Every experience begins with a 10-minute safety briefing — route overview, emergency contacts, and group communication protocol." },
+];
+
+const TESTIMONIALS = [
+  {
+    quote: "We have used Black Tomato, &Beyond, and Abercrombie & Kent across four continents. The Moving Classroom in Bangkok stands with the finest of them. The cultural depth was extraordinary.",
+    author: "Dr. Catherine Ashworth",
+    role: "Head of Humanities, Harrow International School Bangkok",
+    stars: 5,
+  },
+  {
+    quote: "My family has travelled to sixty-two countries. Bangkok with Siam Journeys was the first time my teenagers were genuinely, completely present. They put their phones away. That alone is worth everything.",
+    author: "James Whitmore",
+    role: "Private Client, London",
+    stars: 5,
+  },
+  {
+    quote: "The safety protocol gave us complete confidence as a school. The convoy system, the guide training — it was managed at a level I have only seen with the largest expedition operators.",
+    author: "Ms. Priya Sharma",
+    role: "Director of Enrichment, International School Bangkok",
+    stars: 5,
+  },
+];
+
+const FAQS = [
+  { q: "What is the minimum group size for a journey?", a: "Our curated journeys accommodate groups from 2 to 120 guests. Private journeys begin at 2 persons. School programmes typically operate with 20–60 students across our convoy format." },
+  { q: "How does the convoy safety system work in practice?", a: "Every journey deploys a minimum of three vehicles: a lead guide vehicle, the guest tuk-tuks, and a sweep vehicle at the rear. All vehicles maintain radio contact, with a remote operations coordinator monitoring the entire convoy." },
+  { q: "Are your guides licensed educators or tour guides?", a: "All guides hold a current TAT licence. Our Moving Classroom guides additionally hold teaching qualifications. Every guide is a Bangkok native with deep personal knowledge of their assigned routes." },
+  { q: "Can the curriculum be customised for our school programme?", a: "Yes — customisation is standard for institutional bookings. We work with your IB coordinators or curriculum directors in advance. Pre- and post-visit materials are developed collaboratively at no additional cost." },
+  { q: "What is your weather and cancellation policy?", a: "In the event of severe weather alerts from the Thai Meteorological Department, we reschedule at no cost. Cancellations more than 14 days in advance receive a full refund; within 14 days, a credit valid for 12 months." },
+];
+
+const GALLERY = [
+  { url: "https://images.unsplash.com/photo-1582468546235-9bf31e5bc4a1?w=600&h=900&fit=crop&auto=format", alt: "Temple facade in Bangkok's Rattanakosin quarter" },
+  { url: "https://images.unsplash.com/photo-1776941452020-822b4901446b?w=600&h=420&fit=crop&auto=format", alt: "Golden temple roof detail" },
+  { url: "https://images.unsplash.com/photo-1752839971837-58515a01d879?w=600&h=420&fit=crop&auto=format", alt: "Tuk-tuk on a sunlit Bangkok street" },
+  { url: "https://images.unsplash.com/photo-1678263001211-b1c2f231b5e7?w=600&h=420&fit=crop&auto=format", alt: "Golden temple spire against blue sky" },
+  { url: "https://images.unsplash.com/photo-1769848754718-be02141c6cc3?w=600&h=420&fit=crop&auto=format", alt: "Golden Buddha at sunrise" },
+];
+
+// ─── SHARED MICRO-COMPONENTS ──────────────────────────────────────────────────
+function Label({ children }: { children: React.ReactNode }) {
+  return <p className="text-[11px] tracking-[0.22em] uppercase font-medium mb-4 text-[#B8952A]">{children}</p>;
+}
+
+function Rule({ center = false }: { center?: boolean }) {
+  return <div className={`w-10 h-px bg-[#B8952A] mb-6 ${center ? "mx-auto" : ""}`} />;
+}
+
+function Stars({ n }: { n: number }) {
+  return (
+    <div className="flex gap-0.5">
+      {Array.from({ length: n }).map((_, i) => (
+        <Star key={i} size={13} className="fill-[#B8952A] text-[#B8952A]" />
+      ))}
+    </div>
+  );
+}
+
+function CategoryBadge({ category }: { category: string }) {
+  const map: Record<string, { bg: string; text: string; label: string }> = {
+    morning: { bg: "bg-amber-50", text: "text-amber-700", label: "Morning" },
+    nightlife: { bg: "bg-indigo-50", text: "text-indigo-700", label: "Nightlife" },
+    cultural: { bg: "bg-emerald-50", text: "text-emerald-700", label: "Cultural" },
+    local: { bg: "bg-orange-50", text: "text-orange-700", label: "Local Explore" },
+  };
+  const c = map[category] || { bg: "bg-stone-50", text: "text-stone-600", label: category };
+  return (
+    <span className={`text-[9px] tracking-[0.18em] uppercase font-semibold px-2 py-0.5 ${c.bg} ${c.text}`}>
+      {c.label}
+    </span>
+  );
+}
+
+// ─── SECTION: HERO ────────────────────────────────────────────────────────────
+function Hero() {
+  return (
+    <section className="relative flex items-center justify-center overflow-hidden" style={{ minHeight: "100svh" }}>
+      <div className="absolute inset-0 bg-[#2A2824]">
+        <img
+          src="https://images.unsplash.com/photo-1582468546235-9bf31e5bc4a1?w=1920&h=1200&fit=crop&auto=format"
+          alt="Golden Bangkok temple at dawn"
+          className="w-full h-full object-cover opacity-70"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/15 to-black/65" />
+      </div>
+
+      <div className="relative z-10 text-center max-w-4xl mx-auto px-6 pt-24">
+        <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.3 }} className="text-[10px] tracking-[0.32em] uppercase text-[#B8952A] mb-7">
+          Curated Cultural Journeys · Bangkok, Thailand
+        </motion.p>
+        <motion.h1 initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.1, delay: 0.5 }} className="text-[clamp(3.2rem,9vw,6.5rem)] text-[#FAF7F2] mb-7 leading-[1.04]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+          Bangkok,<br /><em>Unveiled.</em>
+        </motion.h1>
+        <motion.p initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.8 }} className="text-[17px] text-[#FAF7F2]/75 max-w-[480px] mx-auto mb-11 leading-[1.75] font-light">
+          An immersive cultural journey through the soul of the city — by tuk-tuk. For discerning travellers and world-class institutions.
+        </motion.p>
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 1.05 }} className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <button className="px-10 py-4 text-[12px] tracking-[0.12em] uppercase bg-[#B8952A] text-[#FAF7F2] hover:bg-[#A47F22] transition-colors duration-300 w-full sm:w-auto" onClick={() => document.querySelector("#tours")?.scrollIntoView({ behavior: "smooth" })}>
+            Browse Available Tours
+          </button>
+          <button className="px-10 py-4 text-[12px] tracking-[0.12em] uppercase border border-[#FAF7F2]/50 text-[#FAF7F2] hover:border-[#FAF7F2] transition-colors duration-300 w-full sm:w-auto" onClick={() => document.querySelector("#classroom")?.scrollIntoView({ behavior: "smooth" })}>
+            The Moving Classroom
+          </button>
+        </motion.div>
+      </div>
+
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 1.4 }} className="absolute bottom-0 inset-x-0 bg-black/30 backdrop-blur-sm border-t border-white/10">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex flex-wrap justify-center md:justify-between gap-y-3 gap-x-8">
+          {[{ value: "15+", label: "Years in Bangkok" }, { value: "12,000+", label: "Guests Welcomed" }, { value: "4.9 / 5", label: "Verified Rating" }, { value: "100%", label: "Safety Record" }].map(({ value, label }) => (
+            <div key={label} className="text-center">
+              <p className="text-[#B8952A] text-[22px]" style={{ fontFamily: SERIF }}>{value}</p>
+              <p className="text-[#FAF7F2]/55 text-[10px] tracking-[0.18em] uppercase mt-0.5">{label}</p>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+      <div className="absolute bottom-[72px] left-1/2 -translate-x-1/2 text-[#FAF7F2]/30 animate-bounce"><ChevronDown size={18} /></div>
+    </section>
+  );
+}
+
+// ─── SECTION: TRUST BAR ───────────────────────────────────────────────────────
+function TrustBar() {
+  return (
+    <section className="bg-[#2D4A3E] py-4">
+      <div className="max-w-7xl mx-auto px-6 xl:px-12">
+        <div className="flex flex-wrap justify-center xl:justify-between gap-5 xl:gap-0">
+          {TRUST_ITEMS.map(({ icon: Icon, label }) => (
+            <div key={label} className="flex items-center gap-2.5">
+              <Icon size={14} className="text-[#B8952A] flex-shrink-0" />
+              <span className="text-[10px] tracking-[0.18em] uppercase text-[#FAF7F2]/75">{label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── SECTION: EDITORIAL QUOTE ─────────────────────────────────────────────────
+function Quote() {
+  return (
+    <section className="py-24 px-6">
+      <div className="max-w-2xl mx-auto text-center">
+        <div className="w-px h-14 bg-[#B8952A]/35 mx-auto mb-8" />
+        <p className="text-[clamp(1.25rem,3vw,1.65rem)] text-[#2A2824] leading-[1.55] italic" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+          "We do not offer tours. We offer perspective — the living, breathing Bangkok that has no queue, no railing, and no velvet rope."
+        </p>
+        <div className="w-px h-14 bg-[#B8952A]/35 mx-auto mt-8" />
+      </div>
+    </section>
+  );
+}
+
+// ─── SECTION: PHILOSOPHY ──────────────────────────────────────────────────────
+function Philosophy() {
+  return (
+    <section className="py-20 md:py-32 bg-[#EDE5D0]">
+      <div className="max-w-7xl mx-auto px-6 xl:px-12">
+        <div className="grid lg:grid-cols-[1fr_1fr] gap-16 xl:gap-24 items-center">
+          <div>
+            <Label>The Distinction</Label>
+            <Rule />
+            <h2 className="text-[clamp(2rem,4.5vw,3.25rem)] text-[#2A2824] mb-8 leading-[1.2]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+              A Curated Cultural Journey,<br /><em>Not a Tour.</em>
+            </h2>
+            <div className="space-y-5 text-[#5A5248] leading-relaxed text-[15px]">
+              <p>The difference begins before you leave. Most experiences in Bangkok move you past landmarks. Ours move you through them — into the lane behind the temple where the monks eat breakfast, into the conversation with the third-generation goldsmith.</p>
+              <p>Siam Journeys was founded by a Bangkok family who believed the city's greatest gift was not its skyline or its markets, but the relationships that form when two cultures sit across a table from each other with genuine curiosity.</p>
+            </div>
+            <button className="mt-10 flex items-center gap-2 text-[12px] tracking-[0.12em] uppercase text-[#2D4A3E] font-medium group" onClick={() => document.querySelector("#about")?.scrollIntoView({ behavior: "smooth" })}>
+              Our Family Story <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform duration-200" />
+            </button>
+          </div>
+          <div className="relative">
+            <div className="relative overflow-hidden bg-[#C8BBA6]" style={{ aspectRatio: "4/5" }}>
+              <img src="https://images.unsplash.com/photo-1776941452020-822b4901446b?w=900&h=1100&fit=crop&auto=format" alt="Elaborate golden temple roof detail" className="w-full h-full object-cover" />
+            </div>
+            <div className="absolute -bottom-5 -left-5 w-44 h-44 border border-[#B8952A]/25 pointer-events-none hidden lg:block" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── SECTION: AVAILABLE TOURS (NEW) ──────────────────────────────────────────
+function TourCard({ tour, onViewDetails }: { tour: Tour; onViewDetails: (id: string) => void }) {
+  return (
+    <article className="bg-card border border-border group hover:shadow-lg transition-all duration-300 flex flex-col">
+      <div className="relative overflow-hidden bg-[#C8BBA6]" style={{ aspectRatio: "16/10" }}>
+        <img
+          src={tour.img}
+          alt={`${tour.name} tuk-tuk tour Bangkok`}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+        />
+        <div className="absolute top-3 left-3">
+          <CategoryBadge category={tour.category} />
+        </div>
+        {tour.featured && (
+          <div className="absolute top-3 right-3 bg-[#B8952A] text-[#FAF7F2] text-[9px] tracking-[0.2em] uppercase px-2 py-1">
+            Flagship
+          </div>
+        )}
+      </div>
+
+      <div className="p-6 flex flex-col flex-1">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="flex gap-0.5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star key={i} size={11} className={i < Math.round(tour.rating) ? "fill-[#B8952A] text-[#B8952A]" : "text-[#C8BBA6]"} />
+            ))}
+          </div>
+          <span className="text-[12px] text-[#7A6E60]">{tour.rating} ({tour.reviews})</span>
+        </div>
+
+        <h3 className="text-[18px] text-[#2A2824] mb-1.5 leading-snug" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+          {tour.name}
+        </h3>
+        <p className="text-[13px] text-[#7A6E60] mb-4 leading-relaxed flex-1">{tour.tagline}</p>
+
+        <div className="flex items-center gap-4 text-[12px] text-[#5A5248] mb-5">
+          <span className="flex items-center gap-1.5"><Clock size={12} className="text-[#B8952A]" />{tour.duration}</span>
+          <span className="flex items-center gap-1.5"><Users size={12} className="text-[#B8952A]" />{tour.groupSize}</span>
+        </div>
+
+        {/* Pricing */}
+        <div className="mb-5 pb-5 border-b border-border">
+          <div className="flex items-end gap-3">
+            <div>
+              <p className="text-[10px] text-[#7A6E60] tracking-wide">From</p>
+              <p className="text-[22px] text-[#2A2824]" style={{ fontFamily: SERIF }}>
+                ฿{tour.priceSingle.toLocaleString()}
+              </p>
+              <p className="text-[11px] text-[#7A6E60]">per person</p>
+            </div>
+            {tour.priceGroup < tour.priceSingle && (
+              <div className="pb-0.5">
+                <p className="text-[11px] text-[#2D4A3E] font-medium">฿{tour.priceGroup.toLocaleString()} / groups {tour.groupMin}+</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Trust badges */}
+        <div className="flex flex-wrap gap-1.5 mb-5">
+          {tour.badges.map((b) => (
+            <span key={b} className="text-[9px] tracking-[0.1em] uppercase px-2 py-0.5 bg-[#EDE5D0] text-[#5A5248]">{b}</span>
+          ))}
+        </div>
+
+        {/* CTAs */}
+        <div className="flex gap-3 mt-auto">
+          <button
+            className="flex-1 py-2.5 bg-[#2D4A3E] text-[#FAF7F2] text-[11px] tracking-[0.1em] uppercase hover:bg-[#243E33] transition-colors duration-300"
+            onClick={() => onViewDetails(tour.id)}
+          >
+            View Details
+          </button>
+          <button
+            className="flex-1 py-2.5 bg-[#B8952A] text-[#FAF7F2] text-[11px] tracking-[0.1em] uppercase hover:bg-[#A47F22] transition-colors duration-300"
+            onClick={() => onViewDetails(tour.id)}
+          >
+            Book Now
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function FeaturedTourCard({ tour, onViewDetails }: { tour: Tour; onViewDetails: (id: string) => void }) {
+  return (
+    <article className="bg-card border border-border grid md:grid-cols-[1.1fr_1fr] overflow-hidden group hover:shadow-xl transition-all duration-300 mb-8">
+      {/* Image */}
+      <div className="relative overflow-hidden bg-[#C8BBA6]" style={{ minHeight: "340px" }}>
+        <img
+          src={tour.img}
+          alt={`${tour.name} — Bangkok cultural tour`}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+          style={{ position: "absolute", inset: 0 }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/10" />
+        <div className="absolute top-4 left-4 flex gap-2">
+          <CategoryBadge category={tour.category} />
+          <span className="text-[9px] tracking-[0.2em] uppercase px-2 py-0.5 bg-[#B8952A] text-[#FAF7F2]">Flagship Tour</span>
+        </div>
+        <div className="absolute bottom-4 left-4">
+          <div className="flex gap-0.5 mb-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star key={i} size={12} className="fill-[#B8952A] text-[#B8952A]" />
+            ))}
+          </div>
+          <p className="text-[#FAF7F2] text-[12px]">{tour.rating} · {tour.reviews} verified reviews</p>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-8 flex flex-col">
+        <h3 className="text-[clamp(1.4rem,2.5vw,1.9rem)] text-[#2A2824] mb-2 leading-snug" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+          {tour.name}
+        </h3>
+        <p className="text-[13px] text-[#7A6E60] mb-5 leading-relaxed">{tour.tagline}</p>
+
+        <div className="flex flex-wrap gap-4 text-[12px] text-[#5A5248] mb-5">
+          <span className="flex items-center gap-1.5"><Clock size={12} className="text-[#B8952A]" />{tour.duration} · Starts {tour.startTime}</span>
+          <span className="flex items-center gap-1.5"><Users size={12} className="text-[#B8952A]" />{tour.groupSize}</span>
+        </div>
+
+        <ul className="space-y-2 mb-6">
+          {tour.highlights.slice(0, 4).map((h) => (
+            <li key={h} className="flex items-start gap-2.5 text-[13px] text-[#5A5248]">
+              <span className="mt-[5px] w-3 h-3 rounded-full border border-[#B8952A] flex items-center justify-center flex-shrink-0">
+                <span className="w-1 h-1 rounded-full bg-[#B8952A]" />
+              </span>
+              {h}
+            </li>
+          ))}
+        </ul>
+
+        {/* Pricing block */}
+        <div className="p-4 bg-[#EDE5D0] mb-5">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <p className="text-[10px] text-[#7A6E60] tracking-wide">Standard Rate</p>
+              <p className="text-[26px] text-[#2A2824]" style={{ fontFamily: SERIF }}>
+                ฿{tour.priceSingle.toLocaleString()} <span className="text-[14px] text-[#7A6E60]">/ person</span>
+              </p>
+            </div>
+            {tour.priceGroup < tour.priceSingle && (
+              <div>
+                <p className="text-[10px] text-[#7A6E60] tracking-wide">Groups of {tour.groupMin}+</p>
+                <p className="text-[22px] text-[#2D4A3E]" style={{ fontFamily: SERIF }}>
+                  ฿{tour.priceGroup.toLocaleString()} <span className="text-[13px] text-[#7A6E60]">/ person</span>
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Trust badges */}
+        <div className="flex flex-wrap gap-1.5 mb-6">
+          {tour.badges.map((b) => (
+            <span key={b} className="text-[9px] tracking-[0.1em] uppercase px-2 py-1 bg-[#EDE5D0] text-[#5A5248]">{b}</span>
+          ))}
+        </div>
+
+        {/* CTAs */}
+        <div className="flex gap-3 mt-auto">
+          <button
+            className="flex-1 py-3.5 bg-[#B8952A] text-[#FAF7F2] text-[12px] tracking-[0.12em] uppercase hover:bg-[#A47F22] transition-colors duration-300 font-medium"
+            onClick={() => onViewDetails(tour.id)}
+          >
+            Book Now
+          </button>
+          <button
+            className="flex-1 py-3.5 border border-[#2D4A3E] text-[#2D4A3E] text-[12px] tracking-[0.12em] uppercase hover:bg-[#2D4A3E] hover:text-[#FAF7F2] transition-all duration-300"
+            onClick={() => onViewDetails(tour.id)}
+          >
+            View Details
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function AvailableTours() {
+  const [activeCategory, setActiveCategory] = useState<Category | "all">("all");
+  const navigate = useNavigate();
+
+  const featuredTour = TOURS.find((t) => t.featured);
+  const filtered = activeCategory === "all"
+    ? TOURS.filter((t) => !t.featured)
+    : TOURS.filter((t) => t.category === activeCategory && !t.featured);
+
+  const showFeatured = activeCategory === "all" || activeCategory === "cultural";
+
+  function handleViewDetails(id: string) {
+    navigate(`/tours/${id}`);
+  }
+
+  return (
+    <section id="tours" className="py-20 md:py-32 bg-background">
+      <div className="max-w-7xl mx-auto px-6 xl:px-12">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12">
+          <div>
+            <Label>Available Tours</Label>
+            <Rule />
+            <h2 className="text-[clamp(2rem,4vw,3rem)] text-[#2A2824] leading-tight" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+              Browse & Book
+              <br /><em>Your Journey</em>
+            </h2>
+          </div>
+          <p className="text-[14px] text-[#7A6E60] max-w-xs leading-relaxed md:text-right">
+            Every tour operates with our licensed convoy system, certified guides, and full guest insurance.
+          </p>
+        </div>
+
+        {/* Filter bar */}
+        <div className="flex flex-wrap gap-2 mb-10">
+          {CATEGORIES.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setActiveCategory(id)}
+              className={`px-5 py-2 text-[12px] tracking-[0.1em] uppercase transition-all duration-200 border ${
+                activeCategory === id
+                  ? "bg-[#2D4A3E] text-[#FAF7F2] border-[#2D4A3E]"
+                  : "bg-transparent text-[#5A5248] border-border hover:border-[#2D4A3E] hover:text-[#2D4A3E]"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Featured tour */}
+        {showFeatured && featuredTour && (
+          <FeaturedTourCard tour={featuredTour} onViewDetails={handleViewDetails} />
+        )}
+
+        {/* Tour grid */}
+        {filtered.length > 0 ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((tour) => (
+              <TourCard key={tour.id} tour={tour} onViewDetails={handleViewDetails} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16 text-[#7A6E60] text-[14px]">
+            No tours in this category yet. <button className="text-[#2D4A3E] underline" onClick={() => setActiveCategory("all")}>View all tours</button>
+          </div>
+        )}
+
+        {/* Educational / Institutional hook */}
+        <div className="mt-12 grid md:grid-cols-[1fr_auto] gap-6 items-center p-8 bg-[#2D4A3E]">
+          <div>
+            <p className="text-[10px] tracking-[0.22em] uppercase text-[#B8952A] mb-2">Educational Programs</p>
+            <h3 className="text-[20px] text-[#FAF7F2] mb-2" style={{ fontFamily: SERIF }}>
+              Tailored, curriculum-aligned tours for schools & organisations.
+            </h3>
+            <p className="text-[#FAF7F2]/65 text-[14px] leading-relaxed">
+              Custom group rates · IB, Cambridge & AP aligned · Teacher packs · Assessment-ready
+            </p>
+          </div>
+          <button
+            className="flex-shrink-0 px-8 py-3.5 border border-[#FAF7F2]/35 text-[#FAF7F2] text-[12px] tracking-[0.12em] uppercase hover:bg-[#FAF7F2]/10 transition-colors duration-300 whitespace-nowrap"
+            onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}
+          >
+            Contact Us for Custom Rates
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── SECTION: CURATED EXPERIENCES (JOURNEY TYPES) ─────────────────────────────
+function Experiences({ active, setActive }: { active: string; setActive: (id: string) => void }) {
+  const journey = JOURNEYS.find((j) => j.id === active) || JOURNEYS[0];
+  return (
+    <section id="experiences" className="py-20 md:py-32 bg-[#EDE5D0]">
+      <div className="max-w-7xl mx-auto px-6 xl:px-12">
+        <div className="text-center mb-14">
+          <Label>Journey Types</Label>
+          <Rule center />
+          <h2 className="text-[clamp(2rem,4vw,3rem)] text-[#2A2824]" style={{ fontFamily: SERIF, fontWeight: 400 }}>Three Paths Through Bangkok</h2>
+        </div>
+        <div className="flex border-b border-border mb-14 overflow-x-auto">
+          {JOURNEYS.map((j) => (
+            <button key={j.id} onClick={() => setActive(j.id)} className={`px-6 md:px-8 py-4 text-[13px] tracking-wide whitespace-nowrap border-b-[1.5px] -mb-px flex-shrink-0 transition-all duration-200 ${active === j.id ? "border-[#B8952A] text-[#2A2824]" : "border-transparent text-[#7A6E60] hover:text-[#2A2824]"}`}>
+              {j.tab}
+            </button>
+          ))}
+        </div>
+        <div className="grid lg:grid-cols-2 gap-12 xl:gap-20 items-center">
+          <div>
+            <p className="text-[10px] tracking-[0.22em] uppercase text-[#B8952A] mb-4">{journey.badge}</p>
+            <h3 className="text-[clamp(1.6rem,3.5vw,2.5rem)] text-[#2A2824] mb-6 leading-tight" style={{ fontFamily: SERIF, fontWeight: 400 }}>{journey.headline}</h3>
+            <p className="text-[#5A5248] leading-relaxed text-[15px] mb-8">{journey.body}</p>
+            <ul className="space-y-3 mb-10">
+              {journey.highlights.map((h) => (
+                <li key={h} className="flex items-start gap-3">
+                  <span className="mt-[5px] w-3.5 h-3.5 rounded-full border border-[#B8952A] flex items-center justify-center flex-shrink-0"><span className="w-1 h-1 rounded-full bg-[#B8952A]" /></span>
+                  <span className="text-[14px] text-[#5A5248]">{h}</span>
+                </li>
+              ))}
+            </ul>
+            <button className="inline-flex items-center gap-2.5 px-8 py-3.5 bg-[#2D4A3E] text-[#FAF7F2] text-[12px] tracking-[0.1em] uppercase hover:bg-[#243E33] transition-colors duration-300" onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}>
+              Enquire About This Journey <ArrowRight size={13} />
+            </button>
+          </div>
+          <div className="overflow-hidden bg-[#C8BBA6]" style={{ aspectRatio: "4/3" }}>
+            <img key={journey.id} src={journey.img} alt={journey.alt} className="w-full h-full object-cover" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── SECTION: MOVING CLASSROOM ────────────────────────────────────────────────
+function MovingClassroom() {
+  return (
+    <section id="classroom" className="py-20 md:py-32 bg-[#2D4A3E]">
+      <div className="max-w-7xl mx-auto px-6 xl:px-12">
+        <div className="grid lg:grid-cols-[1fr_1.1fr] gap-16 xl:gap-24 items-start">
+          <div>
+            <Label light>Education Programme</Label>
+            <Rule />
+            <h2 className="text-[clamp(2rem,4.5vw,3.25rem)] text-[#FAF7F2] mb-6 leading-[1.2]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+              The Moving<br /><em>Classroom.</em>
+            </h2>
+            <div className="space-y-5 text-[#FAF7F2]/68 leading-relaxed text-[15px] mb-10">
+              <p>Bangkok is one of the world's most complex, living urban ecosystems. Its streets carry eight hundred years of history, a collision of four major religious traditions, and a culinary language that predates the nation itself.</p>
+              <p>We built The Moving Classroom because we believe the finest education happens when the lesson and the experience are inseparable.</p>
+            </div>
+            <button className="inline-flex items-center gap-2.5 px-8 py-3.5 border border-[#FAF7F2]/35 text-[#FAF7F2] text-[12px] tracking-[0.1em] uppercase hover:bg-[#FAF7F2]/10 transition-colors duration-300" onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}>
+              Request a Programme Proposal <ArrowRight size={13} />
+            </button>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-5">
+            {CLASSROOM_OUTCOMES.map(({ icon: Icon, title, body }) => (
+              <div key={title} className="p-6 border border-[#FAF7F2]/10 hover:border-[#B8952A]/45 transition-colors duration-300">
+                <Icon size={18} className="text-[#B8952A] mb-4" />
+                <h4 className="text-[#FAF7F2] text-[15px] mb-2 leading-snug" style={{ fontFamily: SERIF }}>{title}</h4>
+                <p className="text-[#FAF7F2]/55 text-[13px] leading-relaxed">{body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── SECTION: ABOUT ───────────────────────────────────────────────────────────
+function About() {
+  return (
+    <section id="about" className="py-20 md:py-32 bg-background">
+      <div className="max-w-7xl mx-auto px-6 xl:px-12">
+        <div className="grid lg:grid-cols-[1fr_1.15fr] gap-16 xl:gap-24 items-center">
+          <div className="relative">
+            <div className="overflow-hidden bg-[#C8BBA6]" style={{ aspectRatio: "3/4" }}>
+              <img src="https://images.unsplash.com/photo-1595632798355-61f1a6f99c37?w=800&h=1067&fit=crop&auto=format" alt="Guest experiencing Bangkok at a historic temple" className="w-full h-full object-cover" />
+            </div>
+            <div className="absolute -bottom-8 -right-6 overflow-hidden bg-[#C8BBA6] hidden lg:block border-4 border-[#FAF7F2]" style={{ width: "46%", aspectRatio: "1/1" }}>
+              <img src="https://images.unsplash.com/photo-1591233244187-ffd622c51fbd?w=500&h=500&fit=crop&auto=format" alt="Traditional Thai wooden architecture" className="w-full h-full object-cover" />
+            </div>
+          </div>
+          <div className="lg:pb-14">
+            <Label>Our Story</Label>
+            <Rule />
+            <h2 className="text-[clamp(2rem,4.5vw,3.25rem)] text-[#2A2824] mb-8 leading-[1.2]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+              Three Generations<br /><em>of Bangkok.</em>
+            </h2>
+            <div className="space-y-5 text-[#5A5248] leading-relaxed text-[15px] mb-10">
+              <p>Siam Journeys was founded in 2008 by the Charoenwong family — whose roots in Bangkok's Rattanakosin quarter trace back to the reign of King Rama V. We grew up believing the city was not a backdrop — it was a living text.</p>
+              <p>After years working with international schools and luxury travel houses, we saw the same gap everywhere: travellers moved through Bangkok without ever truly touching it. We built Siam Journeys to close that distance, permanently.</p>
+            </div>
+            <div className="pt-7 border-t border-border">
+              <p className="text-[14px] font-medium text-[#2A2824]">Anchana Charoenwong</p>
+              <p className="text-[12px] text-[#7A6E60] tracking-wide mt-0.5">Founder & Creative Director</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── SECTION: SAFETY ──────────────────────────────────────────────────────────
+function Safety() {
+  return (
+    <section id="safety" className="py-20 md:py-32 bg-[#EDE5D0]">
+      <div className="max-w-7xl mx-auto px-6 xl:px-12">
+        <div className="text-center mb-14">
+          <Label>Your Safety</Label>
+          <Rule center />
+          <h2 className="text-[clamp(2rem,4vw,3rem)] text-[#2A2824] mb-4" style={{ fontFamily: SERIF, fontWeight: 400 }}>Engineered for Confidence</h2>
+          <p className="max-w-lg mx-auto text-[#5A5248] leading-relaxed text-[15px]">Safety is not a page on our website. It is the operating system of every journey we run.</p>
+        </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {SAFETY_PILLARS.map(({ icon: Icon, title, body }) => (
+            <div key={title} className="bg-[#FAF7F2] p-8 group hover:shadow-md transition-shadow duration-300">
+              <div className="w-9 h-9 bg-[#2D4A3E] flex items-center justify-center mb-5 group-hover:bg-[#B8952A] transition-colors duration-300">
+                <Icon size={16} className="text-[#FAF7F2]" />
+              </div>
+              <h3 className="text-[16px] text-[#2A2824] mb-3" style={{ fontFamily: SERIF }}>{title}</h3>
+              <p className="text-[13px] text-[#7A6E60] leading-relaxed">{body}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-10 p-8 bg-[#2D4A3E] flex flex-col md:flex-row items-center justify-between gap-6">
+          <div>
+            <p className="text-[#B8952A] text-[10px] tracking-[0.22em] uppercase mb-1.5">Our Commitment</p>
+            <p className="text-[#FAF7F2] text-[20px] leading-snug" style={{ fontFamily: SERIF }}>Fifteen years. Twelve thousand guests. Zero serious incidents.</p>
+          </div>
+          <button className="flex-shrink-0 px-7 py-3.5 border border-[#FAF7F2]/35 text-[#FAF7F2] text-[12px] tracking-[0.1em] uppercase hover:bg-[#FAF7F2]/10 transition-colors duration-300 whitespace-nowrap" onClick={() => document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" })}>
+            Request Our Safety Protocol
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── SECTION: TESTIMONIALS ────────────────────────────────────────────────────
+function Testimonials() {
+  return (
+    <section className="py-20 md:py-32 bg-background">
+      <div className="max-w-7xl mx-auto px-6 xl:px-12">
+        <div className="text-center mb-14">
+          <Label>Guest Voices</Label>
+          <Rule center />
+          <h2 className="text-[clamp(2rem,4vw,3rem)] text-[#2A2824]" style={{ fontFamily: SERIF, fontWeight: 400 }}>What Stays With You</h2>
+        </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {TESTIMONIALS.map(({ quote, author, role, stars }) => (
+            <div key={author} className="bg-[#EDE5D0] p-8 flex flex-col">
+              <Stars n={stars} />
+              <p className="text-[#2A2824] text-[15px] leading-[1.7] mt-6 mb-8 flex-1 italic" style={{ fontFamily: SERIF, fontWeight: 400 }}>"{quote}"</p>
+              <div className="pt-6 border-t border-[#2A2824]/10">
+                <p className="text-[14px] font-medium text-[#2A2824]">{author}</p>
+                <p className="text-[12px] text-[#7A6E60] mt-0.5">{role}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── SECTION: GALLERY ─────────────────────────────────────────────────────────
+function Gallery() {
+  return (
+    <section id="gallery" className="py-20 md:py-32 bg-[#EDE5D0]">
+      <div className="max-w-7xl mx-auto px-6 xl:px-12">
+        <div className="text-center mb-14">
+          <Label>Visual Journal</Label>
+          <Rule center />
+          <h2 className="text-[clamp(2rem,4vw,3rem)] text-[#2A2824]" style={{ fontFamily: SERIF, fontWeight: 400 }}>Bangkok Through Our Lens</h2>
+        </div>
+        <div className="grid grid-cols-3 gap-3" style={{ gridTemplateRows: "280px 280px", gridTemplateAreas: '"a b c" "a d e"' }}>
+          {[["a", GALLERY[0]], ["b", GALLERY[1]], ["c", GALLERY[2]], ["d", GALLERY[3]], ["e", GALLERY[4]]].map(([area, photo]) => (
+            <div key={area as string} className="overflow-hidden group cursor-pointer bg-[#C8BBA6]" style={{ gridArea: area as string }}>
+              <img src={(photo as typeof GALLERY[0]).url} alt={(photo as typeof GALLERY[0]).alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── SECTION: FAQ ─────────────────────────────────────────────────────────────
+function Faq({ open, setOpen }: { open: number | null; setOpen: (i: number | null) => void }) {
+  return (
+    <section className="py-20 md:py-32 bg-background">
+      <div className="max-w-2xl mx-auto px-6">
+        <div className="text-center mb-14">
+          <Label>Questions & Answers</Label>
+          <Rule center />
+          <h2 className="text-[clamp(2rem,4vw,3rem)] text-[#2A2824]" style={{ fontFamily: SERIF, fontWeight: 400 }}>Everything You Need to Know</h2>
+        </div>
+        <div className="divide-y divide-border">
+          {FAQS.map(({ q, a }, i) => (
+            <div key={i} className="py-6">
+              <button className="w-full flex items-start justify-between gap-4 text-left group" onClick={() => setOpen(open === i ? null : i)} aria-expanded={open === i}>
+                <span className="text-[15px] text-[#2A2824] group-hover:text-[#2D4A3E] transition-colors duration-200 leading-snug" style={{ fontFamily: SERIF }}>{q}</span>
+                <ChevronDown size={16} className={`flex-shrink-0 text-[#B8952A] transition-transform duration-300 mt-1 ${open === i ? "rotate-180" : ""}`} />
+              </button>
+              {open === i && <div className="mt-4 text-[14px] text-[#5A5248] leading-relaxed pr-6">{a}</div>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── SECTION: BOOKING CTA ─────────────────────────────────────────────────────
+function BookingCta() {
+  return (
+    <section id="contact" className="relative py-28 md:py-40 overflow-hidden">
+      <div className="absolute inset-0 bg-[#1E3329]">
+        <img src="https://images.unsplash.com/photo-1563492065599-3520f775eeed?w=1920&h=900&fit=crop&auto=format" alt="Thai temples at golden hour" className="w-full h-full object-cover opacity-40" />
+        <div className="absolute inset-0 bg-[#2D4A3E]/75" />
+      </div>
+      <div className="relative z-10 max-w-3xl mx-auto px-6 xl:px-0">
+        <div className="text-center mb-12">
+          <p className="text-[10px] tracking-[0.32em] uppercase text-[#B8952A] mb-5">Begin Here</p>
+          <h2 className="text-[clamp(2.4rem,6vw,4.5rem)] text-[#FAF7F2] mb-5 leading-tight" style={{ fontFamily: SERIF, fontWeight: 400 }}>Your Bangkok Awaits.</h2>
+          <p className="text-[#FAF7F2]/65 text-[16px] leading-[1.75] max-w-md mx-auto">Every journey begins with a conversation. Tell us who you are, what you seek, and we will design something extraordinary around you.</p>
+        </div>
+        <div className="bg-[#FAF7F2]/10 backdrop-blur-sm border border-[#FAF7F2]/15 p-8 md:p-12">
+          <div className="grid md:grid-cols-2 gap-5 mb-5">
+            {[{ label: "Full Name", type: "text", placeholder: "Your name" }, { label: "Email Address", type: "email", placeholder: "your@email.com" }].map(({ label, type, placeholder }) => (
+              <div key={label}>
+                <label className="block text-[10px] tracking-[0.18em] uppercase text-[#FAF7F2]/55 mb-2">{label}</label>
+                <input type={type} placeholder={placeholder} className="w-full bg-[#FAF7F2]/8 border border-[#FAF7F2]/18 text-[#FAF7F2] placeholder:text-[#FAF7F2]/28 px-4 py-3 text-[14px] focus:outline-none focus:border-[#B8952A] transition-colors duration-200" />
+              </div>
+            ))}
+            <div>
+              <label className="block text-[10px] tracking-[0.18em] uppercase text-[#FAF7F2]/55 mb-2">Journey Type</label>
+              <select className="w-full bg-[#FAF7F2]/8 border border-[#FAF7F2]/18 text-[#FAF7F2] px-4 py-3 text-[14px] focus:outline-none focus:border-[#B8952A] transition-colors duration-200 appearance-none">
+                <option value="" className="text-[#2A2824] bg-[#FAF7F2]">Select a journey</option>
+                {TOURS.map((t) => <option key={t.id} value={t.id} className="text-[#2A2824] bg-[#FAF7F2]">{t.name}</option>)}
+                <option value="custom" className="text-[#2A2824] bg-[#FAF7F2]">Custom / Educational Programme</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] tracking-[0.18em] uppercase text-[#FAF7F2]/55 mb-2">Group Size</label>
+              <input type="text" placeholder="e.g. 2 adults, or 40 students" className="w-full bg-[#FAF7F2]/8 border border-[#FAF7F2]/18 text-[#FAF7F2] placeholder:text-[#FAF7F2]/28 px-4 py-3 text-[14px] focus:outline-none focus:border-[#B8952A] transition-colors duration-200" />
+            </div>
+          </div>
+          <div className="mb-6">
+            <label className="block text-[10px] tracking-[0.18em] uppercase text-[#FAF7F2]/55 mb-2">Tell Us More</label>
+            <textarea rows={4} placeholder="Preferred dates, curriculum requirements, special interests..." className="w-full bg-[#FAF7F2]/8 border border-[#FAF7F2]/18 text-[#FAF7F2] placeholder:text-[#FAF7F2]/28 px-4 py-3 text-[14px] focus:outline-none focus:border-[#B8952A] transition-colors duration-200 resize-none" />
+          </div>
+          <button className="w-full md:w-auto px-12 py-4 bg-[#B8952A] text-[#FAF7F2] text-[12px] tracking-[0.14em] uppercase hover:bg-[#A47F22] transition-colors duration-300">Send Your Enquiry</button>
+        </div>
+        <div className="mt-10 flex flex-wrap justify-center gap-8">
+          <a href="mailto:hello@siamjourneys.com" className="flex items-center gap-2 text-[#FAF7F2]/55 text-[13px] hover:text-[#FAF7F2] transition-colors"><Mail size={13} />hello@siamjourneys.com</a>
+          <a href="tel:+6621234567" className="flex items-center gap-2 text-[#FAF7F2]/55 text-[13px] hover:text-[#FAF7F2] transition-colors"><Phone size={13} />+66 2 123 4567</a>
+          <span className="flex items-center gap-2 text-[#FAF7F2]/55 text-[13px]"><MapPin size={13} />Phra Nakhon, Bangkok 10200</span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── HOME PAGE ────────────────────────────────────────────────────────────────
+export function Home() {
+  const [activeJourney, setActiveJourney] = useState("heritage");
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  return (
+    <>
+      <Hero />
+      <TrustBar />
+      <Quote />
+      <Philosophy />
+      <AvailableTours />
+      <Experiences active={activeJourney} setActive={setActiveJourney} />
+      <MovingClassroom />
+      <About />
+      <Safety />
+      <Testimonials />
+      <Gallery />
+      <Faq open={openFaq} setOpen={setOpenFaq} />
+      <BookingCta />
+    </>
+  );
+}

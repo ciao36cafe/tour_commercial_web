@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking Confirmation - Siam Journeys</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #FAF7F2;
+      color: #2A2824;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #FFFFFF;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(42, 40, 36, 0.1);
+    }
+    .header {
+      background: #2D4A3E;
+      color: #FAF7F2;
+      padding: 40px 40px 30px;
+      text-align: center;
+    }
+    .header h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-weight: 400;
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .header p {
+      color: rgba(250, 247, 242, 0.7);
+      font-size: 14px;
+    }
+    .header .badge {
+      display: inline-block;
+      background: rgba(250, 247, 242, 0.15);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-top: 12px;
+      letter-spacing: 0.5px;
+    }
+    .content {
+      padding: 40px;
+    }
+    .order-id {
+      background: #EDE5D0;
+      padding: 16px 20px;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .order-id .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: #7A6E60;
+    }
+    .order-id .number {
+      font-size: 24px;
+      font-weight: 700;
+      color: #2A2824;
+      font-family: 'Courier New', monospace;
+      margin-top: 4px;
+    }
+    .section {
+      margin-bottom: 28px;
+    }
+    .section-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-weight: 400;
+      font-size: 18px;
+      color: #2A2824;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #EDE5D0;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 16px;
+    }
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 14px;
+      border-bottom: 1px solid #F0EDE8;
+    }
+    .info-item .label {
+      color: #7A6E60;
+    }
+    .info-item .value {
+      color: #2A2824;
+      font-weight: 500;
+    }
+    .info-item.full-width {
+      grid-column: 1 / -1;
+    }
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      background: #D4EDDA;
+      color: #155724;
+    }
+    .divider {
+      border: none;
+      border-top: 1px solid #EDE5D0;
+      margin: 24px 0;
+    }
+    .total {
+      background: #EDE5D0;
+      padding: 16px 20px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .total .label {
+      font-size: 16px;
+      font-weight: 500;
+      color: #2A2824;
+    }
+    .total .amount {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #B8952A;
+    }
+    .next-steps {
+      background: #FAF7F2;
+      padding: 20px 24px;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+    .next-steps li {
+      padding: 6px 0;
+      font-size: 14px;
+      color: #5A5248;
+      list-style: none;
+    }
+    .next-steps li::before {
+      content: "• ";
+      color: #B8952A;
+      font-weight: bold;
+    }
+    .footer {
+      background: #2A2824;
+      color: rgba(250, 247, 242, 0.5);
+      padding: 30px 40px;
+      text-align: center;
+      font-size: 12px;
+    }
+    .footer a {
+      color: #B8952A;
+      text-decoration: none;
+    }
+    .footer a:hover {
+      text-decoration: underline;
+    }
+    .footer .social {
+      margin-top: 12px;
+    }
+    .footer .social span {
+      margin: 0 8px;
+      color: rgba(250, 247, 242, 0.3);
+    }
+    @media (max-width: 480px) {
+      .content {
+        padding: 24px;
+      }
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+      .header {
+        padding: 30px 20px;
+      }
+      .header h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>Booking Confirmed</h1>
+      <p>Thank you for choosing Siam Journeys</p>
+      <div class="badge">✓ Payment Verified</div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <!-- Order ID -->
+      <div class="order-id">
+        <div class="label">Order Number</div>
+        <div class="number">{{orderId}}</div>
+      </div>
+
+      <!-- Tour Details -->
+      <div class="section">
+        <h2 class="section-title">Tour Details</h2>
+        <div class="info-grid">
+          <div class="info-item full-width">
+            <span class="label">Tour</span>
+            <span class="value">{{bookingDetails.tourName}}</span>
+          </div>
+          <div class="info-item full-width">
+            <span class="label">Date</span>
+            <span class="value">{{bookingDetails.date}}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Guests</span>
+            <span class="value">{{bookingDetails.guests}}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Price per person</span>
+            <span class="value">฿{{bookingDetails.pricePerPerson}}</span>
+          </div>
+          {{#if bookingDetails.isFamilyTrip}}
+          <div class="info-item full-width">
+            <span class="label">Family Trip</span>
+            <span class="value">{{bookingDetails.numberOfFamilies}} family(ies) · {{bookingDetails.totalAdults}} adults{{#if bookingDetails.totalChildren}} + {{bookingDetails.totalChildren}} children{{/if}}</span>
+          </div>
+          {{/if}}
+          {{#if bookingDetails.isGroup}}
+          <div class="info-item full-width">
+            <span class="label">Group Rate</span>
+            <span class="value">Group of {{bookingDetails.groupMin}}+</span>
+          </div>
+          {{/if}}
+        </div>
+      </div>
+
+      <!-- Personal Information -->
+      <div class="section">
+        <h2 class="section-title">Personal Information</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Name</span>
+            <span class="value">{{personalInfo.firstName}} {{personalInfo.lastName}}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Email</span>
+            <span class="value">{{personalInfo.email}}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Phone</span>
+            <span class="value">{{personalInfo.phone}}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Country</span>
+            <span class="value">{{personalInfo.country}}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accommodation -->
+      <div class="section">
+        <h2 class="section-title">Accommodation</h2>
+        <div class="info-grid">
+          <div class="info-item full-width">
+            <span class="label">Hotel</span>
+            <span class="value">{{tripDetails.hotelName}}</span>
+          </div>
+          <div class="info-item full-width">
+            <span class="label">Address</span>
+            <span class="value">{{tripDetails.hotelAddress}}</span>
+          </div>
+          {{#if tripDetails.roomNumber}}
+          <div class="info-item">
+            <span class="label">Room</span>
+            <span class="value">{{tripDetails.roomNumber}}</span>
+          </div>
+          {{/if}}
+        </div>
+      </div>
+
+      <!-- Flight Details (if provided) -->
+      {{#if tripDetails.flightNumber}}
+      <div class="section">
+        <h2 class="section-title">Flight Details</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Flight Number</span>
+            <span class="value">{{tripDetails.flightNumber}}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Arrival Time</span>
+            <span class="value">{{tripDetails.arrivalTime}}</span>
+          </div>
+        </div>
+      </div>
+      {{/if}}
+
+      <!-- Special Requirements (if any) -->
+      {{#if tripDetails.dietaryNeeds}}
+      <div class="section">
+        <h2 class="section-title">Special Requirements</h2>
+        <div class="info-grid">
+          {{#if tripDetails.dietaryNeeds}}
+          <div class="info-item full-width">
+            <span class="label">Dietary</span>
+            <span class="value">{{tripDetails.dietaryNeeds}}</span>
+          </div>
+          {{/if}}
+          {{#if tripDetails.accessibilityNeeds}}
+          <div class="info-item full-width">
+            <span class="label">Accessibility</span>
+            <span class="value">{{tripDetails.accessibilityNeeds}}</span>
+          </div>
+          {{/if}}
+          {{#if tripDetails.specialRequests}}
+          <div class="info-item full-width">
+            <span class="label">Special Requests</span>
+            <span class="value">{{tripDetails.specialRequests}}</span>
+          </div>
+          {{/if}}
+        </div>
+      </div>
+      {{/if}}
+
+      <!-- Emergency Contact -->
+      <div class="section">
+        <h2 class="section-title">Emergency Contact</h2>
+        <div class="info-grid">
+          <div class="info-item full-width">
+            <span class="label">Name</span>
+            <span class="value">{{emergencyContact.name}}</span>
+          </div>
+          {{#if emergencyContact.phone}}
+          <div class="info-item">
+            <span class="label">Phone</span>
+            <span class="value">{{emergencyContact.phone}}</span>
+          </div>
+          {{/if}}
+          <div class="info-item">
+            <span class="label">Email</span>
+            <span class="value">{{emergencyContact.email}}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Relationship</span>
+            <span class="value">{{emergencyContact.relation}}</span>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- Total -->
+      <div class="total">
+        <span class="label">Total Paid</span>
+        <span class="amount">฿{{bookingDetails.totalPrice}}</span>
+      </div>
+
+      <!-- Next Steps -->
+      <div class="section" style="margin-top: 28px;">
+        <h2 class="section-title">What's Next?</h2>
+        <div class="next-steps">
+          <li>Check your email for updates about your tour</li>
+          <li>Review your booking details above</li>
+          <li>Contact us if you have any questions</li>
+          <li>We look forward to welcoming you!</li>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p style="margin-bottom: 8px;">
+        <strong style="color: #FAF7F2;">Siam Journeys</strong>
+      </p>
+      <p>Curated cultural journeys through Bangkok</p>
+      <p style="margin-top: 4px;">
+        <a href="mailto:hello@siamjourneys.com">hello@siamjourneys.com</a>
+        &nbsp;·&nbsp; +66 2 123 4567
+      </p>
+      <p style="margin-top: 8px; font-size: 11px;">
+        Phra Nakhon, Bangkok 10200 · Thailand
+      </p>
+      <div class="social">
+        <span>Instagram</span>
+        <span>|</span>
+        <span>Facebook</span>
+        <span>|</span>
+        <span>YouTube</span>
+      </div>
+      <p style="margin-top: 16px; font-size: 11px; color: rgba(250, 247, 242, 0.3);">
+        © 2024 Siam Journeys Co., Ltd. · TAT Licence No. 11/07418
+      </p>
+    </div>
+  </div>
+</body>
+</html>

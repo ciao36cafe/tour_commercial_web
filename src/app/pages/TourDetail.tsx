@@ -1,0 +1,794 @@
+// TourDetail.tsx (updated with simpler sticky behavior)
+import { useState, useEffect, useRef } from "react";
+import { useParams, useNavigate } from "react-router";
+import {
+  ArrowLeft, Clock, Users, Star, Check, X, Shirt, Activity,
+  UserCheck, List, Shield, ChevronDown, Phone, Calendar,
+} from "lucide-react";
+
+const SERIF = "'Playfair Display', Georgia, serif";
+
+// ============ TYPES ============
+interface TourEssentials {
+  dressCode: string;
+  fitness: string;
+  agePolicy: string;
+  prep: string[];
+}
+
+interface ItineraryItem {
+  time: string;
+  title: string;
+  description: string;
+}
+
+interface Tour {
+  _id?: string;
+  id: string;
+  category: "morning" | "nightlife" | "cultural" | "local";
+  featured?: boolean;
+  name: string;
+  tagline: string;
+  duration: string;
+  startTime: string;
+  groupSize: string;
+  priceSingle: number;
+  priceFam: number;
+  priceGroup: number;
+  groupMin: number;
+  rating: number;
+  reviews: number;
+  img: string;
+  heroImg: string;
+  galleryImgs: string[];
+  badges: string[];
+  description: string;
+  highlights: string[];
+  included: string[];
+  notIncluded: string[];
+  itinerary: ItineraryItem[];
+  essentials: TourEssentials;
+  metaDescription: string;
+}
+
+// ============ COMPONENTS ============
+function StarRow({ rating, reviews }: { rating: number; reviews: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex gap-0.5">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Star 
+            key={i} 
+            size={14} 
+            className={i < Math.round(rating) ? "fill-[#B8952A] text-[#B8952A]" : "text-[#C8BBA6]"}
+          />
+        ))}
+      </div>
+      <span className="text-[13px] text-[#7A6E60]">{rating} · {reviews} reviews</span>
+    </div>
+  );
+}
+
+function CategoryBadge({ category }: { category: string }) {
+  const colors: Record<string, string> = {
+    morning: "bg-amber-50 text-amber-700 border-amber-200",
+    nightlife: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    cultural: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    local: "bg-orange-50 text-orange-700 border-orange-200",
+  };
+  const labels: Record<string, string> = {
+    morning: "Morning",
+    nightlife: "Nightlife",
+    cultural: "Cultural",
+    local: "Local Explore",
+  };
+  return (
+    <span className={`text-[10px] tracking-[0.18em] uppercase font-medium px-3 py-1 border ${colors[category] || "bg-stone-50 text-stone-600 border-stone-200"}`}>
+      {labels[category] || category}
+    </span>
+  );
+}
+
+function MobileEssentialsSummary({ essentials }: { essentials: TourEssentials }) {
+  return (
+    <div className="bg-[#EDE5D0] p-5">
+      <p className="text-[11px] tracking-[0.18em] uppercase text-[#B8952A] font-medium mb-4">Tour Essentials</p>
+      <div className="space-y-3.5">
+        {[
+          { icon: Shirt, label: "Dress Code", value: essentials.dressCode.split(".")[0] + "." },
+          { icon: Activity, label: "Fitness Level", value: essentials.fitness },
+          { icon: UserCheck, label: "Age Policy", value: essentials.agePolicy },
+        ].map(({ icon: Icon, label, value }) => (
+          <div key={label} className="flex items-start gap-3">
+            <div className="w-7 h-7 bg-[#2D4A3E] flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Icon size={13} className="text-[#FAF7F2]" />
+            </div>
+            <div>
+              <p className="text-[10px] tracking-[0.14em] uppercase text-[#B8952A] font-medium">{label}</p>
+              <p className="text-[12px] text-[#5A5248] leading-snug mt-0.5">{value}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <a href="#essentials" className="mt-4 block text-[11px] tracking-[0.12em] uppercase text-[#2D4A3E] hover:text-[#B8952A] transition-colors">
+        View full requirements ↓
+      </a>
+    </div>
+  );
+}
+
+// ============ MAIN COMPONENT ============
+export function TourDetail() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  
+  // State for tour data
+  const [tour, setTour] = useState<Tour | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // UI state
+  const [openItinerary, setOpenItinerary] = useState<number | null>(0);
+  const [guests, setGuests] = useState(2);
+  const [date, setDate] = useState("");
+  
+  // Family trip states
+  const [isFamilyTrip, setIsFamilyTrip] = useState(false);
+  const [numberOfFamilies, setNumberOfFamilies] = useState(1);
+  const [adultsPerFamily, setAdultsPerFamily] = useState(2);
+  const [childrenPerFamily, setChildrenPerFamily] = useState(0);
+
+  // ============ FETCH TOUR DATA ============
+  useEffect(() => {
+    const fetchTour = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+        const response = await fetch(`${API_URL}/api/tour-templates/${id}`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('Tour not found');
+          }
+          throw new Error(`Failed to fetch tour: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          const tourData = result.data;
+          const mappedTour: Tour = {
+            _id: tourData._id,
+            id: tourData._id,
+            category: tourData.category || 'cultural',
+            name: tourData.name || 'Unnamed Tour',
+            tagline: tourData.tagline || '',
+            duration: tourData.duration || `${tourData.default_duration_minutes || 180} min`,
+            startTime: tourData.start_time || '09:00',
+            groupSize: tourData.group_size || `${tourData.group_min || 2}+ people`,
+            priceSingle: tourData.price_single || 0,
+            priceFam: tourData.price_fam || 0,
+            priceGroup: tourData.price_group || 0,
+            groupMin: tourData.group_min || 4,
+            rating: tourData.rating || 4.5,
+            reviews: tourData.reviews || 0,
+            img: tourData.hero_img || '',
+            heroImg: tourData.hero_img || '',
+            galleryImgs: tourData.gallery_imgs || [],
+            badges: tourData.badges || [],
+            description: tourData.description || '',
+            highlights: tourData.highlights || [],
+            included: tourData.included || [],
+            notIncluded: tourData.not_included || [],
+            itinerary: tourData.itinerary || [],
+            essentials: {
+              dressCode: tourData.dress_code || 'Smart casual. Please cover shoulders and knees for temple visits.',
+              fitness: tourData.fitness || 'Moderate. Some walking and navigating steps.',
+              agePolicy: tourData.age_policy || 'All ages welcome. Children under 12 must be accompanied by an adult.',
+              prep: tourData.prep || ['Comfortable shoes', 'Sunscreen', 'Camera']
+            },
+            metaDescription: tourData.tagline || `Experience ${tourData.name} with Siam Journeys Bangkok.`
+          };
+          
+          setTour(mappedTour);
+          document.title = `${mappedTour.name} | Siam Journeys Bangkok`;
+        } else {
+          throw new Error('Tour data not found');
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load tour');
+        console.error('Error fetching tour:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTour();
+  }, [id]);
+
+  // ============ PRICING CALCULATIONS ============
+  if (!tour) return null;
+  
+  const isGroup = !isFamilyTrip && guests >= tour.groupMin;
+  const pricePerPerson = isGroup ? tour.priceGroup : tour.priceSingle;
+  const priceFam = tour.priceFam || tour.priceGroup || tour.priceSingle;
+  
+  const totalAdults = isFamilyTrip ? numberOfFamilies * adultsPerFamily : guests;
+  const totalChildren = isFamilyTrip ? numberOfFamilies * childrenPerFamily : 0;
+  
+  const totalPrice = isFamilyTrip 
+    ? numberOfFamilies * priceFam
+    : pricePerPerson * guests;
+
+  const essentialItems = [
+    { icon: Shirt, label: "Dress Code", value: tour.essentials.dressCode },
+    { icon: Activity, label: "Fitness Level", value: tour.essentials.fitness },
+    { icon: UserCheck, label: "Age Policy", value: tour.essentials.agePolicy },
+    { icon: List, label: "What to Bring", value: tour.essentials.prep.join(" · ") },
+    { icon: Shield, label: "Guide Contact", value: "Activated in your booking confirmation. Your guide's direct number is sent 24 hours before departure." },
+  ];
+
+  // ============ HANDLERS ============
+  const handleFamilyTripToggle = (checked: boolean) => {
+    setIsFamilyTrip(checked);
+    if (checked) {
+      setNumberOfFamilies(1);
+      setAdultsPerFamily(Math.min(guests, 4));
+      setChildrenPerFamily(0);
+    } else {
+      const totalPeople = numberOfFamilies * (adultsPerFamily + childrenPerFamily);
+      setGuests(Math.max(1, totalPeople));
+    }
+  };
+
+  const getMaxChildrenPerFamily = () => 2;
+
+  const handleBookNow = () => {
+    if (!date) {
+      alert("Please select a preferred date.");
+      return;
+    }
+
+    const bookingData = {
+      tourId: tour.id,
+      tourName: tour.name,
+      date: date,
+      guests: isFamilyTrip ? totalAdults + totalChildren : guests,
+      totalPrice: totalPrice,
+      pricePerPerson: pricePerPerson,
+      isFamilyTrip: isFamilyTrip,
+      numberOfFamilies: isFamilyTrip ? numberOfFamilies : undefined,
+      adultsPerFamily: isFamilyTrip ? adultsPerFamily : undefined,
+      childrenPerFamily: isFamilyTrip ? childrenPerFamily : undefined,
+      totalAdults: isFamilyTrip ? totalAdults : undefined,
+      totalChildren: isFamilyTrip ? totalChildren : undefined,
+      priceFam: isFamilyTrip ? priceFam : undefined,
+      isGroup: isGroup,
+      groupMin: tour.groupMin,
+      priceSingle: tour.priceSingle,
+      priceGroup: tour.priceGroup,
+    };
+    
+    navigate('/booking', { state: bookingData });
+  };
+
+  // ============ LOADING STATE ============
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center pt-20">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#B8952A] mx-auto"></div>
+          <p className="text-[#7A6E60] mt-4">Loading tour...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ============ ERROR STATE ============
+  if (error || !tour) {
+    return (
+      <div className="min-h-screen flex items-center justify-center pt-20">
+        <div className="text-center max-w-md px-6">
+          <p className="text-[#7A6E60] mb-4">{error || 'Tour not found.'}</p>
+          <button
+            className="text-[#2D4A3E] text-sm underline hover:text-[#B8952A] transition-colors"
+            onClick={() => navigate("/")}
+          >
+            Return home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ============ RENDER ============
+  return (
+    <>
+      {/* ── SEO meta ── */}
+      <title>{tour.name} | Siam Journeys Bangkok</title>
+      <meta name="description" content={tour.metaDescription} />
+      <meta property="og:title" content={`${tour.name} | Siam Journeys Bangkok`} />
+      <meta property="og:description" content={tour.metaDescription} />
+      <meta property="og:image" content={tour.heroImg} />
+      <meta property="og:url" content={`https://siamjourneys.com/tour/${tour.id}`} />
+
+      {/* ── HERO ── */}
+      <div className="relative overflow-hidden bg-[#2A2824]" style={{ height: "clamp(320px, 45vw, 560px)" }}>
+        <img
+          src={tour.heroImg}
+          alt={`${tour.name} — Bangkok tuk-tuk tour`}
+          className="w-full h-full object-cover opacity-65"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1582468546235-9bf31e5bc4a1?w=1200&h=600&fit=crop&auto=format";
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/20 to-black/70" />
+
+        {/* Back button */}
+        <button
+          className="absolute top-24 left-6 xl:left-12 flex items-center gap-2 text-[#FAF7F2]/70 hover:text-[#FAF7F2] transition-colors text-[13px] tracking-wide group"
+          onClick={() => navigate(-1)}
+          aria-label="Go back"
+        >
+          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform duration-200" />
+          All Tours
+        </button>
+
+        {/* Hero content */}
+        <div className="absolute bottom-0 inset-x-0 p-6 xl:px-12 pb-10">
+          <div className="max-w-7xl mx-auto">
+            <CategoryBadge category={tour.category} />
+            <h1
+              className="text-[clamp(1.8rem,4vw,3rem)] text-[#FAF7F2] mt-3 mb-2 leading-tight"
+              style={{ fontFamily: SERIF, fontWeight: 400 }}
+            >
+              {tour.name}
+            </h1>
+            <p className="text-[#FAF7F2]/70 text-[15px] max-w-xl">{tour.tagline}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── BODY ── */}
+      <div className="max-w-7xl mx-auto px-6 xl:px-12 py-12">
+        <div className="lg:grid lg:grid-cols-[1fr_360px] gap-12 items-start">
+
+          {/* ── LEFT — main content ── */}
+          <div className="space-y-12">
+
+            {/* Quick stats */}
+            <div className="flex flex-wrap gap-6 pb-8 border-b border-border">
+              <StarRow rating={tour.rating} reviews={tour.reviews} />
+              <div className="flex items-center gap-2 text-[13px] text-[#5A5248]">
+                <Clock size={14} className="text-[#B8952A]" />
+                {tour.duration} · Starts {tour.startTime}
+              </div>
+              <div className="flex items-center gap-2 text-[13px] text-[#5A5248]">
+                <Users size={14} className="text-[#B8952A]" />
+                {tour.groupSize}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {tour.badges.map((b) => (
+                  <span key={b} className="text-[10px] tracking-[0.12em] uppercase px-2.5 py-1 bg-[#EDE5D0] text-[#5A5248]">
+                    {b}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Mobile: Tour Essentials */}
+            <div className="lg:hidden">
+              <MobileEssentialsSummary essentials={tour.essentials} />
+            </div>
+
+            {/* Description */}
+            <section>
+              <h2 className="text-[22px] text-[#2A2824] mb-4" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                About This Journey
+              </h2>
+              <p className="text-[15px] text-[#5A5248] leading-relaxed">{tour.description}</p>
+            </section>
+
+            {/* Highlights */}
+            <section>
+              <h2 className="text-[22px] text-[#2A2824] mb-5" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                What You Will Experience
+              </h2>
+              <ul className="grid sm:grid-cols-2 gap-3">
+                {tour.highlights.map((h) => (
+                  <li key={h} className="flex items-start gap-3">
+                    <span className="mt-[5px] w-3.5 h-3.5 rounded-full border border-[#B8952A] flex items-center justify-center flex-shrink-0">
+                      <span className="w-1 h-1 rounded-full bg-[#B8952A]" />
+                    </span>
+                    <span className="text-[14px] text-[#5A5248]">{h}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            {/* Itinerary */}
+            <section>
+              <h2 className="text-[22px] text-[#2A2824] mb-5" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                Itinerary
+              </h2>
+              <div className="divide-y divide-border">
+                {tour.itinerary.map((item, i) => (
+                  <div key={i} className="py-4">
+                    <button
+                      className="w-full flex items-center justify-between gap-4 text-left group"
+                      onClick={() => setOpenItinerary(openItinerary === i ? null : i)}
+                    >
+                      <div className="flex items-center gap-4">
+                        <span className="text-[11px] tracking-[0.16em] text-[#B8952A] w-[68px] flex-shrink-0">{item.time || `Stop ${i + 1}`}</span>
+                        <span
+                          className="text-[15px] text-[#2A2824] group-hover:text-[#2D4A3E] transition-colors"
+                          style={{ fontFamily: SERIF }}
+                        >
+                          {item.title || 'Tour Stop'}
+                        </span>
+                      </div>
+                      <ChevronDown
+                        size={15}
+                        className={`flex-shrink-0 text-[#B8952A] transition-transform duration-300 ${openItinerary === i ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    {openItinerary === i && (
+                      <p className="mt-3 ml-[calc(68px+1rem)] text-[14px] text-[#5A5248] leading-relaxed pr-6">
+                        {item.description || 'Details coming soon...'}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Included / Not included */}
+            <section>
+              <h2 className="text-[22px] text-[#2A2824] mb-6" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                What's Included
+              </h2>
+              <div className="grid sm:grid-cols-2 gap-8">
+                <div>
+                  <p className="text-[11px] tracking-[0.18em] uppercase text-[#2D4A3E] mb-4 font-medium">Included</p>
+                  <ul className="space-y-2.5">
+                    {tour.included.map((item) => (
+                      <li key={item} className="flex items-start gap-2.5">
+                        <Check size={14} className="text-[#2D4A3E] mt-0.5 flex-shrink-0" />
+                        <span className="text-[14px] text-[#5A5248]">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-[11px] tracking-[0.18em] uppercase text-[#7A6E60] mb-4 font-medium">Not Included</p>
+                  <ul className="space-y-2.5">
+                    {tour.notIncluded.map((item) => (
+                      <li key={item} className="flex items-start gap-2.5">
+                        <X size={14} className="text-[#C4714A] mt-0.5 flex-shrink-0" />
+                        <span className="text-[14px] text-[#5A5248]">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </section>
+
+            {/* Gallery */}
+            {tour.galleryImgs.length > 0 && (
+              <section>
+                <h2 className="text-[22px] text-[#2A2824] mb-5" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                  Gallery
+                </h2>
+                <div className={`grid gap-3 ${tour.galleryImgs.length >= 3 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2"}`}>
+                  {tour.galleryImgs.map((src, i) => (
+                    <div 
+                      key={i} 
+                      className={`overflow-hidden group bg-[#C8BBA6] ${i === 0 && tour.galleryImgs.length >= 3 ? "sm:col-span-2 sm:row-span-2" : ""}`} 
+                      style={{ aspectRatio: i === 0 && tour.galleryImgs.length >= 3 ? "1/1" : "4/3" }}
+                    >
+                      <img 
+                        src={src} 
+                        alt={`${tour.name} gallery image ${i + 1}`} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1582468546235-9bf31e5bc4a1?w=600&h=400&fit=crop&auto=format";
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Tour Essentials — full detail */}
+            <section id="essentials" className="bg-[#EDE5D0] p-8">
+              <h2 className="text-[20px] text-[#2A2824] mb-6" style={{ fontFamily: SERIF, fontWeight: 400 }}>
+                Tour Essentials
+              </h2>
+              <div className="space-y-5">
+                {essentialItems.map(({ icon: Icon, label, value }) => (
+                  <div key={label} className="flex items-start gap-4">
+                    <div className="w-8 h-8 bg-[#2D4A3E] flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Icon size={14} className="text-[#FAF7F2]" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] tracking-[0.16em] uppercase text-[#B8952A] mb-1 font-medium">{label}</p>
+                      <p className="text-[14px] text-[#5A5248] leading-relaxed">{value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          {/* ── RIGHT — sticky sidebar ── */}
+          <div className="hidden lg:block">
+            <div className="sticky top-24 space-y-5">
+              {/* Booking card */}
+              <div className="bg-[#FFFDF8] border border-border shadow-sm p-6">
+                {/* Pricing */}
+                <div className="mb-5 pb-5 border-b border-border">
+                  <p className="text-[11px] tracking-[0.18em] uppercase text-[#7A6E60] mb-1">From</p>
+                  <p className="text-[32px] text-[#2A2824] leading-none" style={{ fontFamily: SERIF }}>
+                    ฿{tour.priceSingle.toLocaleString()}
+                  </p>
+                  <p className="text-[13px] text-[#7A6E60] mt-1">per person</p>
+                  {tour.priceGroup < tour.priceSingle && (
+                    <div className="mt-3 px-3 py-2 bg-[#EDE5D0] flex items-center gap-2">
+                      <Users size={13} className="text-[#2D4A3E] flex-shrink-0" />
+                      <p className="text-[12px] text-[#5A5248]">
+                        Groups of {tour.groupMin}+: <strong className="text-[#2D4A3E]">฿{tour.priceGroup.toLocaleString()}/person</strong>
+                      </p>
+                    </div>
+                  )}
+                  {tour.priceFam && (
+                    <div className="mt-2 px-3 py-2 bg-[#EDE5D0] flex items-center gap-2">
+                      <Users size={13} className="text-[#2D4A3E] flex-shrink-0" />
+                      <p className="text-[12px] text-[#5A5248]">
+                        Family package: <strong className="text-[#2D4A3E]">฿{tour.priceFam.toLocaleString()}/family</strong> (1 tuk-tuk)
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Inputs */}
+                <div className="space-y-4 mb-5">
+                  <div>
+                    <label className="block text-[10px] tracking-[0.16em] uppercase text-[#7A6E60] mb-1.5">
+                      <Calendar size={11} className="inline mr-1" />
+                      Preferred Date
+                    </label>
+                    <input
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      className="w-full border border-border px-3 py-2.5 text-[14px] text-[#2A2824] focus:outline-none focus:border-[#B8952A] transition-colors bg-transparent"
+                    />
+                  </div>
+                  
+                  {/* Family Trip Checkbox */}
+                  <div className="flex items-center gap-3 pt-1">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isFamilyTrip}
+                        onChange={(e) => handleFamilyTripToggle(e.target.checked)}
+                        className="w-4 h-4 accent-[#B8952A]"
+                      />
+                      <span className="text-[13px] text-[#2A2824]">Family Trip</span>
+                    </label>
+                    {isFamilyTrip && (
+                      <span className="text-[10px] text-[#7A6E60]">(1 tuk-tuk per family)</span>
+                    )}
+                  </div>
+
+                  {isFamilyTrip ? (
+                    // Family mode inputs
+                    <>
+                      {/* Number of Families */}
+                      <div>
+                        <label className="block text-[10px] tracking-[0.16em] uppercase text-[#7A6E60] mb-1.5">
+                          <Users size={11} className="inline mr-1" />
+                          Number of Families (Tuk-tuks)
+                        </label>
+                        <div className="flex items-center border border-border">
+                          <button
+                            className="w-10 h-10 flex items-center justify-center text-[#2A2824] hover:bg-[#EDE5D0] transition-colors"
+                            onClick={() => setNumberOfFamilies(Math.max(1, numberOfFamilies - 1))}
+                          >
+                            –
+                          </button>
+                          <span className="flex-1 text-center text-[15px] text-[#2A2824] font-medium">{numberOfFamilies}</span>
+                          <button
+                            className="w-10 h-10 flex items-center justify-center text-[#2A2824] hover:bg-[#EDE5D0] transition-colors"
+                            onClick={() => setNumberOfFamilies(numberOfFamilies + 1)}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Adults per Family */}
+                      <div>
+                        <label className="block text-[10px] tracking-[0.16em] uppercase text-[#7A6E60] mb-1.5">
+                          <Users size={11} className="inline mr-1" />
+                          Adults per Family
+                        </label>
+                        <div className="flex items-center border border-border">
+                          <button
+                            className="w-10 h-10 flex items-center justify-center text-[#2A2824] hover:bg-[#EDE5D0] transition-colors"
+                            onClick={() => setAdultsPerFamily(Math.max(1, adultsPerFamily - 1))}
+                          >
+                            –
+                          </button>
+                          <span className="flex-1 text-center text-[15px] text-[#2A2824] font-medium">{adultsPerFamily}</span>
+                          <button
+                            className="w-10 h-10 flex items-center justify-center text-[#2A2824] hover:bg-[#EDE5D0] transition-colors"
+                            onClick={() => setAdultsPerFamily(adultsPerFamily + 1)}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Children per Family */}
+                      <div>
+                        <label className="block text-[10px] tracking-[0.16em] uppercase text-[#7A6E60] mb-1.5">
+                          <Users size={11} className="inline mr-1" />
+                          Children per Family (3-10 years)
+                        </label>
+                        <div className="flex items-center border border-border">
+                          <button
+                            className="w-10 h-10 flex items-center justify-center text-[#2A2824] hover:bg-[#EDE5D0] transition-colors"
+                            onClick={() => setChildrenPerFamily(Math.max(0, childrenPerFamily - 1))}
+                          >
+                            –
+                          </button>
+                          <span className="flex-1 text-center text-[15px] text-[#2A2824] font-medium">{childrenPerFamily}</span>
+                          <button
+                            className="w-10 h-10 flex items-center justify-center text-[#2A2824] hover:bg-[#EDE5D0] transition-colors"
+                            onClick={() => {
+                              if (childrenPerFamily < getMaxChildrenPerFamily()) {
+                                setChildrenPerFamily(childrenPerFamily + 1);
+                              }
+                            }}
+                          >
+                            +
+                          </button>
+                        </div>
+                        {childrenPerFamily >= getMaxChildrenPerFamily() && (
+                          <p className="text-[10px] text-[#B8952A] mt-1">Maximum 2 children per family reached</p>
+                        )}
+                        <p className="text-[10px] text-[#7A6E60] mt-1">
+                          Total: {totalAdults} adults, {totalChildren} children across {numberOfFamilies} families
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    // Regular mode - single guest counter
+                    <div>
+                      <label className="block text-[10px] tracking-[0.16em] uppercase text-[#7A6E60] mb-1.5">
+                        <Users size={11} className="inline mr-1" />
+                        Number of Guests
+                      </label>
+                      <div className="flex items-center border border-border">
+                        <button
+                          className="w-10 h-10 flex items-center justify-center text-[#2A2824] hover:bg-[#EDE5D0] transition-colors"
+                          onClick={() => setGuests(Math.max(1, guests - 1))}
+                        >
+                          –
+                        </button>
+                        <span className="flex-1 text-center text-[15px] text-[#2A2824] font-medium">{guests}</span>
+                        <button
+                          className="w-10 h-10 flex items-center justify-center text-[#2A2824] hover:bg-[#EDE5D0] transition-colors"
+                          onClick={() => setGuests(guests + 1)}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Price summary */}
+                <div className="mb-5 p-3 bg-[#EDE5D0]">
+                  <div className="flex justify-between text-[13px] text-[#5A5248]">
+                    <span>
+                      {isFamilyTrip 
+                        ? `฿${priceFam.toLocaleString()} × ${numberOfFamilies} family${numberOfFamilies > 1 ? 'ies' : ''}`
+                        : `฿${pricePerPerson.toLocaleString()} × ${guests} guests`
+                      }
+                    </span>
+                    <span className="font-medium text-[#2A2824]">
+                      ฿{totalPrice.toLocaleString()}
+                    </span>
+                  </div>
+                  {isFamilyTrip && (
+                    <div className="text-[11px] text-[#2D4A3E] mt-1">
+                      Family package applied ✓
+                      {numberOfFamilies > 1 && ` (${numberOfFamilies} tuk-tuks)`}
+                      {totalChildren > 0 && ` · ${totalChildren} children included`}
+                    </div>
+                  )}
+                  {!isFamilyTrip && isGroup && (
+                    <p className="text-[11px] text-[#2D4A3E] mt-1">Group rate applied ✓</p>
+                  )}
+                </div>
+
+                <button 
+                  className="w-full py-4 bg-[#B8952A] text-[#FAF7F2] text-[13px] tracking-[0.12em] uppercase hover:bg-[#A47F22] transition-colors duration-300 font-medium"
+                  onClick={handleBookNow}
+                >
+                  Book Now
+                </button>
+                <p className="text-center text-[11px] text-[#7A6E60] mt-3">No payment today · Free cancellation 14 days prior</p>
+              </div>
+
+              {/* Essentials summary card */}
+              <div className="bg-[#EDE5D0] p-6">
+                <h3 className="text-[15px] text-[#2A2824] mb-4" style={{ fontFamily: SERIF }}>Tour Essentials</h3>
+                <div className="space-y-3.5">
+                  {[
+                    { icon: Shirt, label: "Dress Code", snippet: tour.essentials.dressCode.split(".")[0] + "." },
+                    { icon: Activity, label: "Fitness", snippet: tour.essentials.fitness.split("(")[0].trim() },
+                    { icon: UserCheck, label: "Age Policy", snippet: tour.essentials.agePolicy.split(";")[0] + "." },
+                    { icon: Shield, label: "Guide Contact", snippet: "Activated at booking confirmation." },
+                  ].map(({ icon: Icon, label, snippet }) => (
+                    <div key={label} className="flex items-start gap-3">
+                      <div className="w-7 h-7 bg-[#2D4A3E] flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Icon size={13} className="text-[#FAF7F2]" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] tracking-[0.14em] uppercase text-[#B8952A] font-medium">{label}</p>
+                        <p className="text-[12px] text-[#5A5248] leading-snug mt-0.5">{snippet}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <a
+                  href="#essentials"
+                  className="mt-4 block text-center text-[11px] tracking-[0.12em] uppercase text-[#2D4A3E] hover:text-[#B8952A] transition-colors"
+                >
+                  View full requirements ↓
+                </a>
+              </div>
+
+              {/* Need help */}
+              <div className="border border-border p-5 flex items-start gap-3">
+                <Phone size={15} className="text-[#B8952A] flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[13px] font-medium text-[#2A2824]">Need help choosing?</p>
+                  <p className="text-[12px] text-[#7A6E60] mt-0.5">Our team responds within 2 hours.</p>
+                  <a href="tel:+6621234567" className="text-[12px] text-[#2D4A3E] hover:text-[#B8952A] transition-colors mt-1 block">
+                    +66 2 123 4567
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── MOBILE sticky Book Now bar ── */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[#FAF7F2] border-t border-border px-6 py-4 flex items-center justify-between gap-4 shadow-[0_-4px_20px_rgba(42,40,36,0.1)]">
+        <div>
+          <p className="text-[11px] text-[#7A6E60] tracking-wide">From</p>
+          <p className="text-[20px] text-[#2A2824]" style={{ fontFamily: SERIF }}>฿{tour.priceSingle.toLocaleString()}</p>
+          <p className="text-[11px] text-[#7A6E60]">per person</p>
+        </div>
+        <button 
+          className="flex-1 max-w-[200px] py-3.5 bg-[#B8952A] text-[#FAF7F2] text-[12px] tracking-[0.12em] uppercase hover:bg-[#A47F22] transition-colors"
+          onClick={handleBookNow}
+        >
+          Book Now
+        </button>
+      </div>
+      {/* Spacer for mobile sticky bar */}
+      <div className="lg:hidden h-24" />
+    </>
+  );
+}
