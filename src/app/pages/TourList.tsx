@@ -1,6 +1,6 @@
 // TourList.tsx
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Search,
   Filter,

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowRight, Shield, Users, GraduationCap, Award, Star,
   Phone, Mail, MapPin, ChevronDown, Compass, Clock, Check, Loader2

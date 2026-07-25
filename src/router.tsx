@@ -1,5 +1,5 @@
 // src/router.tsx
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter } from "react-router-dom";
 import { Root } from "./app/components/Root";    // ← app/ is inside src/
 import { Home } from "./app/pages/Home";          // ← app/ is inside src/
 import { TourDetail } from "./app/pages/TourDetail";

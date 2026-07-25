@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   CheckCircle,
   Loader2,
