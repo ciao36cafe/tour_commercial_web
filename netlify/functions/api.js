@@ -19,7 +19,7 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'Test route works!' });
 });
 
-// ✅ ALL async code inside this function
+// ✅ ALL async code inside this function - NO top-level await
 async function initializeApp() {
   console.log('🔄 Initializing app...');
   
@@ -87,8 +87,8 @@ async function initializeApp() {
   console.log('✅ All routes mounted');
 }
 
-// ✅ Wait for initialization to complete BEFORE exporting
-await initializeApp();
+// ✅ Call WITHOUT await - NO top-level await!
+initializeApp();
 
-// ✅ Now export the handler (routes are loaded!)
+// ✅ Export the handler
 export const handler = serverless(app);
