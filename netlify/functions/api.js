@@ -10,12 +10,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Health check
+// Health check - works immediately
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', mongodb: 'connected' });
 });
 
-// Test route
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Test route works!' });
 });
@@ -24,14 +23,11 @@ app.get('/api/test', (req, res) => {
 async function initializeApp() {
   console.log('🔄 Initializing app...');
   
-  // 1. Connect to MongoDB FIRST
+  // Connect to MongoDB
   let db;
   try {
     const dbModule = await import('../../server/db.js');
     db = dbModule.default || dbModule;
-    console.log('📊 db type:', typeof db);
-    console.log('📊 db.connect exists:', typeof db.connect === 'function');
-    
     if (typeof db.connect === 'function') {
       console.log('🔄 Connecting to MongoDB...');
       await db.connect();
@@ -41,7 +37,7 @@ async function initializeApp() {
     console.error('❌ MongoDB connection failed:', error.message);
   }
 
-  // 2. Load routes AFTER database is connected
+  // Load routes
   console.log('🔄 Loading routes...');
   
   try {
@@ -91,8 +87,8 @@ async function initializeApp() {
   console.log('✅ All routes mounted');
 }
 
-// ✅ Call WITHOUT await at top level
-initializeApp();
+// ✅ Wait for initialization to complete BEFORE exporting
+await initializeApp();
 
-// ✅ Export the handler
+// ✅ Now export the handler (routes are loaded!)
 export const handler = serverless(app);
