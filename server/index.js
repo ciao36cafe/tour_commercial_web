@@ -5,11 +5,11 @@ import cors from 'cors';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ✅ Sync middleware (no async)
+// ✅ Sync middleware
 app.use(cors());
 app.use(express.json());
 
-// ✅ Sync routes (no async)
+// ✅ Sync routes
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -26,11 +26,11 @@ app.get('/api/test', (req, res) => {
   res.json({ message: 'Test route works!' });
 });
 
-// ✅ ALL async code INSIDE this ONE function
-async function initializeApp() {
-  console.log('🔄 Initializing app...');
+// ✅ ALL async code inside this function - NO top-level await
+async function loadRoutesAndStart() {
+  console.log('🔄 Loading routes...');
   
-  // 1. Load db
+  // Load db
   let db;
   try {
     const dbModule = await import('./db.js');
@@ -45,7 +45,7 @@ async function initializeApp() {
     };
   }
 
-  // 2. Update health check
+  // Update health check
   app.get('/api/health', (req, res) => {
     res.json({ 
       status: 'ok', 
@@ -53,7 +53,7 @@ async function initializeApp() {
     });
   });
 
-  // 3. Connect to database
+  // Connect to database
   try {
     if (typeof db.connect === 'function') {
       console.log('🔄 Connecting to database...');
@@ -64,10 +64,7 @@ async function initializeApp() {
     console.error('❌ Database connection failed:', error.message);
   }
   
-  // 4. Load routes using require
-  console.log('🔄 Loading routes...');
-  
-  // Use import() for routes (inside async function)
+  // ✅ Load routes using dynamic import (inside async function)
   try {
     const module = await import('./routes/tour.routes.js');
     const tourRoutes = module.default || module;
@@ -121,7 +118,7 @@ async function initializeApp() {
   }
 }
 
-// ✅ Call WITHOUT await - NO top-level await!
-initializeApp();
+// ✅ Call WITHOUT await at top level
+loadRoutesAndStart();
 
 export default app;

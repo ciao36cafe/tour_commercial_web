@@ -1,16 +1,98 @@
 import 'dotenv/config';
+import express from 'express';
+import cors from 'cors';
 import serverless from 'serverless-http';
-import app from '../../server/index.js';
 
-// ✅ Ensure the app is properly exported
-const expressApp = app.default || app;
+// ✅ Create app
+const app = express();
 
-console.log('📊 app type:', typeof expressApp);
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-if (typeof expressApp !== 'function') {
-  console.error('❌ App is not a function');
-  throw new Error('App is not a valid Express application');
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', mongodb: 'connected' });
+});
+
+// Test route
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Test route works!' });
+});
+
+// ✅ ALL async code inside this function
+async function initializeApp() {
+  console.log('🔄 Initializing app...');
+  
+  // 1. Connect to MongoDB FIRST
+  let db;
+  try {
+    const dbModule = await import('../../server/db.js');
+    db = dbModule.default || dbModule;
+    console.log('📊 db type:', typeof db);
+    console.log('📊 db.connect exists:', typeof db.connect === 'function');
+    
+    if (typeof db.connect === 'function') {
+      console.log('🔄 Connecting to MongoDB...');
+      await db.connect();
+      console.log('✅ MongoDB connected');
+    }
+  } catch (error) {
+    console.error('❌ MongoDB connection failed:', error.message);
+  }
+
+  // 2. Load routes AFTER database is connected
+  console.log('🔄 Loading routes...');
+  
+  try {
+    const module = await import('../../server/routes/tour.routes.js');
+    const tourRoutes = module.default || module;
+    if (typeof tourRoutes === 'function') {
+      app.use('/api/tours', tourRoutes);
+      console.log('✅ Tour routes loaded');
+    }
+  } catch (e) {
+    console.error('❌ Tour routes failed:', e.message);
+  }
+
+  try {
+    const module = await import('../../server/routes/tourTemplate.routes.js');
+    const tourTemplateRoutes = module.default || module;
+    if (typeof tourTemplateRoutes === 'function') {
+      app.use('/api/tour-templates', tourTemplateRoutes);
+      console.log('✅ Tour template routes loaded');
+    }
+  } catch (e) {
+    console.error('❌ Tour template routes failed:', e.message);
+  }
+
+  try {
+    const module = await import('../../server/routes/tourStop.routes.js');
+    const tourStopRoutes = module.default || module;
+    if (typeof tourStopRoutes === 'function') {
+      app.use('/api/tour-stops', tourStopRoutes);
+      console.log('✅ Tour stop routes loaded');
+    }
+  } catch (e) {
+    console.error('❌ Tour stop routes failed:', e.message);
+  }
+
+  try {
+    const module = await import('../../server/routes/booking.routes.js');
+    const bookingRoutes = module.default || module;
+    if (typeof bookingRoutes === 'function') {
+      app.use('/api/bookings', bookingRoutes);
+      console.log('✅ Booking routes loaded');
+    }
+  } catch (e) {
+    console.error('❌ Booking routes failed:', e.message);
+  }
+  
+  console.log('✅ All routes mounted');
 }
 
-// ✅ Export the handler - this is what Netlify looks for
-export const handler = serverless(expressApp);
+// ✅ Call WITHOUT await at top level
+initializeApp();
+
+// ✅ Export the handler
+export const handler = serverless(app);

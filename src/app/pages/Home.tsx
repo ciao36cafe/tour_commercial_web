@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowRight, Shield, Users, GraduationCap, Award, Star,
@@ -310,7 +310,7 @@ function Philosophy() {
   );
 }
 
-// ─── SECTION: AVAILABLE TOURS (UPDATED WITH API) ─────────────────────────────
+// ─── SECTION: AVAILABLE TOURS ─────────────────────────────────────────────
 function TourCard({ tour, onViewDetails }: { tour: Tour; onViewDetails: (id: string) => void }) {
   return (
     <article className="bg-card border border-border group hover:shadow-lg transition-all duration-300 flex flex-col">
@@ -497,17 +497,24 @@ function FeaturedTourCard({ tour, onViewDetails }: { tour: Tour; onViewDetails: 
   );
 }
 
-// ─── AVAILABLE TOURS COMPONENT (FIXED) ─────────────────────────────────────
-// ─── AVAILABLE TOURS COMPONENT (FIXED FILTER) ─────────────────────────────
+// ─── AVAILABLE TOURS COMPONENT ─────────────────────────────────────────────
 function AvailableTours() {
   const [activeCategory, setActiveCategory] = useState<Category | "all">("all");
   const [tours, setTours] = useState<Tour[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  
+  // ✅ Single declaration
+  const hasFetched = useRef(false);
+
+  console.log('🔍 State:', { loading, tours: tours.length, error });
 
   useEffect(() => {
-    fetchTours();
+    if (!hasFetched.current) {
+      hasFetched.current = true;
+      fetchTours();
+    }
   }, []);
 
   const fetchTours = async () => {
@@ -515,21 +522,58 @@ function AvailableTours() {
       setLoading(true);
       setError(null);
       
-      // Use the correct API endpoint
-      const API_URL = import.meta.env.PROD ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:5001');
+      const API_URL = import.meta.env.PROD ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:8888');
+      
+      // ✅ Wait for API to be ready with health check
+      let isReady = false;
+      let attempts = 0;
+      const maxAttempts = 5;
+      
+      console.log('🔍 Checking if API is ready...');
+      
+      while (!isReady && attempts < maxAttempts) {
+        try {
+          const healthResponse = await fetch(`${API_URL}/api/health`);
+          if (healthResponse.ok) {
+            isReady = true;
+            console.log('✅ API is ready!');
+            break;
+          }
+        } catch (e) {
+          console.log(`⏳ API not ready yet... (${attempts + 1}/${maxAttempts})`);
+        }
+        
+        attempts++;
+        if (!isReady) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      
+      if (!isReady) {
+        throw new Error('API server is not responding after multiple attempts');
+      }
+      
+      console.log('🔍 Fetching tours...');
       const response = await fetch(`${API_URL}/api/tour-templates?active=true`);
       
       if (!response.ok) {
+        // ✅ If 404, auto-refresh once
+        if (response.status === 404) {
+          console.log('🔄 404 detected - refreshing page...');
+          window.location.reload();
+          return; // Stop execution
+        }
         throw new Error(`Failed to fetch tours: ${response.status}`);
       }
       
       const result = await response.json();
+      console.log('✅ Tours received:', result.data?.length);
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch tours');
       }
       
-      // Map the API data to match the Tour type
+      // Map the data
       const mappedTours: Tour[] = result.data.map((t: any) => ({
         id: t._id || t.id,
         name: t.name || 'Unnamed Tour',
@@ -561,20 +605,26 @@ function AvailableTours() {
         featured: t.isFeaturedTour || false,
       }));
       
+      console.log('📊 Mapped tours:', mappedTours.length);
       setTours(mappedTours);
     } catch (err) {
-      console.error('Error fetching tours:', err);
+      console.error('❌ Error fetching tours:', err);
       setError(err instanceof Error ? err.message : 'Failed to load tours');
     } finally {
       setLoading(false);
+      console.log('✅ Loading set to false');
     }
   };
 
   // Get filtered tours based on category
+// Add logging
   const filteredTours = activeCategory === "all"
     ? tours
     : tours.filter((t) => t.category === activeCategory);
-  
+
+  console.log('📊 Active category:', activeCategory);
+  console.log('📊 Total tours:', tours.length);
+  console.log('📊 Filtered tours:', filteredTours.length);
   // Find featured tour - ONLY from the filtered tours
   const featuredTour = filteredTours.length > 0 
     ? filteredTours.reduce((prev, current) => (prev.rating > current.rating) ? prev : current)
@@ -654,7 +704,7 @@ function AvailableTours() {
           ))}
         </div>
 
-        {/* Featured tour - ONLY show if there's a featured tour in the filtered results */}
+        {/* Featured tour */}
         {featuredTour && filteredTours.length > 0 && (
           <FeaturedTourCard tour={featuredTour} onViewDetails={handleViewDetails} />
         )}
@@ -715,7 +765,7 @@ function AvailableTours() {
   );
 }
 
-// ─── SECTION: CURATED EXPERIENCES (JOURNEY TYPES) ─────────────────────────────
+// ─── SECTION: CURATED EXPERIENCES ─────────────────────────────────────────────
 function Experiences({ active, setActive }: { active: string; setActive: (id: string) => void }) {
   const journey = JOURNEYS.find((j) => j.id === active) || JOURNEYS[0];
   return (

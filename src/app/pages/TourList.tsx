@@ -263,7 +263,8 @@ export function TourList() {
         if (result.categories) {
           setCategories(result.categories);
         } else {
-          const uniqueCategories = [...new Set(result.data.map((t: TourTemplate) => t.category))].filter(Boolean);
+          // ✅ Fixed: Add type assertion and filter
+          const uniqueCategories = [...new Set(result.data.map((t: TourTemplate) => t.category as string))].filter(Boolean) as string[];
           setCategories(uniqueCategories);
         }
         
