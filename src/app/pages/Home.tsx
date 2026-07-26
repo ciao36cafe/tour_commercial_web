@@ -522,18 +522,23 @@ function AvailableTours() {
       setLoading(true);
       setError(null);
       
+      // ✅ This is the key - uses relative URL in production, localhost in dev
       const API_URL = import.meta.env.PROD ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:8888');
+      console.log('📍 API_URL:', API_URL);
       
-      // ✅ Wait for API to be ready with health check
+      // ✅ Health check - uses the SAME API_URL
       let isReady = false;
       let attempts = 0;
-      const maxAttempts = 5;
+      const maxAttempts = 3;
       
       console.log('🔍 Checking if API is ready...');
       
       while (!isReady && attempts < maxAttempts) {
         try {
-          const healthResponse = await fetch(`${API_URL}/api/health`);
+          // ✅ THIS IS THE FIX - uses API_URL variable
+          const healthUrl = `${API_URL}/api/health`;
+          console.log(`⏳ Checking: ${healthUrl}`);
+          const healthResponse = await fetch(healthUrl);
           if (healthResponse.ok) {
             isReady = true;
             console.log('✅ API is ready!');
@@ -549,19 +554,19 @@ function AvailableTours() {
         }
       }
       
+      // ✅ Don't throw error if health check fails - just try fetching
       if (!isReady) {
-        throw new Error('API server is not responding after multiple attempts');
+        console.warn('⚠️ API health check failed, but trying to fetch tours anyway...');
       }
       
       console.log('🔍 Fetching tours...');
       const response = await fetch(`${API_URL}/api/tour-templates?active=true`);
       
       if (!response.ok) {
-        // ✅ If 404, auto-refresh once
         if (response.status === 404) {
           console.log('🔄 404 detected - refreshing page...');
           window.location.reload();
-          return; // Stop execution
+          return;
         }
         throw new Error(`Failed to fetch tours: ${response.status}`);
       }
