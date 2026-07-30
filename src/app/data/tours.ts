@@ -1,4 +1,4 @@
-export type Category = "morning" | "nightlife" | "cultural" | "local";
+export type Category = "morning" | "nightlife" | "cultural" | "local" | "full-day";
 
 export interface ItineraryItem {
   time: string;

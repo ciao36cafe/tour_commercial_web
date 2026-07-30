@@ -1,8 +1,6 @@
+// src/pages/BookingConfirmation.tsx
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-
-// Get API URL based on environment
-const API_BASE_URL = import.meta.env.PROD ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:5001');
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   CheckCircle,
   Loader2,
@@ -15,11 +13,20 @@ import {
   FileText,
   Copy,
   Check,
+  AlertCircle,
+  Phone,
+  QrCode,
 } from "lucide-react";
+
+// ─── IMPORT SERVICES ──────────────────────────────────────────────────────────
+import { sendBookingEmails, BookingEmailData } from "../services/emailService";
+import { generateOrderQRCode } from "../services/qrCodeService";
 
 const SERIF = "'Playfair Display', Georgia, serif";
 
+// ============ TYPES ============
 interface BookingData {
+  // Basic booking info
   tourId: string;
   tourName: string;
   date: string;
@@ -35,6 +42,21 @@ interface BookingData {
   priceFam?: number;
   isGroup?: boolean;
   groupMin?: number;
+  
+  // Full tour data from TourDetail
+  tourDescription?: string;
+  tourHighlights?: string[];
+  tourIncluded?: string[];
+  tourNotIncluded?: string[];
+  tourItinerary?: Array<{ time: string; title: string; description: string }>;
+  tourEssentials?: {
+    dressCode: string;
+    fitness: string;
+    agePolicy: string;
+    prep: string[];
+  };
+  tourDuration?: string;
+  tourStartTime?: string;
 }
 
 interface FormData {
@@ -59,27 +81,58 @@ interface FormData {
   agreeCommunications: boolean;
 }
 
+// ============ COMPONENT ============
 export function BookingConfirmation() {
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Get ALL data from navigation state
   const state = location.state as {
     orderId: string;
     bookingData: BookingData;
     formData: FormData;
+    dbStatus?: string;
+    isOffline?: boolean;
+    orderStatus?: string;
   } | null;
 
+  console.log('📥 BookingConfirmation received from BookingPage:', {
+    orderId: state?.orderId,
+    tourName: state?.bookingData?.tourName,
+    hasIncluded: !!state?.bookingData?.tourIncluded,
+    includedCount: state?.bookingData?.tourIncluded?.length,
+    hasNotIncluded: !!state?.bookingData?.tourNotIncluded,
+    notIncludedCount: state?.bookingData?.tourNotIncluded?.length,
+    hasItinerary: !!state?.bookingData?.tourItinerary,
+    itineraryCount: state?.bookingData?.tourItinerary?.length,
+    hasEssentials: !!state?.bookingData?.tourEssentials,
+    dbStatus: state?.dbStatus,
+    isOffline: state?.isOffline,
+  });
+
+  // ─── STATE ───────────────────────────────────────────────────────────────────
   const [copied, setCopied] = useState(false);
   const [verificationTime, setVerificationTime] = useState(0);
+  
+  // Email states
+  const [emailStatus, setEmailStatus] = useState<'pending' | 'sending' | 'sent' | 'failed'>('pending');
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailsSent, setEmailsSent] = useState(false);
+  
+  // QR Code state
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
+  const [qrCodeExternalUrl, setQrCodeExternalUrl] = useState<string>('');
+  const [qrCodeGenerated, setQrCodeGenerated] = useState(false);
 
-  // If no state, redirect to home
+  // ─── REDIRECT IF NO STATE ──────────────────────────────────────────────────
   if (!state) {
     navigate("/");
     return null;
   }
 
-  const { orderId, bookingData, formData } = state;
+  const { orderId, bookingData, formData, dbStatus, isOffline, orderStatus } = state;
 
-  // Simulate verification progress
+  // ─── SIMULATE VERIFICATION ────────────────────────────────────────────────
   useEffect(() => {
     const timer = setInterval(() => {
       setVerificationTime((prev) => {
@@ -94,6 +147,181 @@ export function BookingConfirmation() {
     return () => clearInterval(timer);
   }, []);
 
+  // ─── GENERATE QR CODE ──────────────────────────────────────────────────────
+  useEffect(() => {
+    const generateQR = async () => {
+      if (!qrCodeGenerated && verificationTime >= 50) {
+        try {
+          console.log('🔲 Generating QR code for order:', orderId);
+          const qrResult = await generateOrderQRCode(orderId);
+          setQrCodeDataUrl(qrResult.dataUrl);
+          setQrCodeExternalUrl(qrResult.externalUrl);
+          setQrCodeGenerated(true);
+          console.log('✅ QR code generated successfully');
+        } catch (error) {
+          console.error('❌ Error generating QR code:', error);
+          const fallbackUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${orderId}&color=1B2A4A&bgcolor=FFFFFF`;
+          setQrCodeDataUrl(fallbackUrl);
+          setQrCodeExternalUrl(fallbackUrl);
+          setQrCodeGenerated(true);
+        }
+      }
+    };
+
+    generateQR();
+  }, [verificationTime, orderId, qrCodeGenerated]);
+
+  // ─── SEND RESERVATION EMAILS WITH ALL DATA ────────────────────────────────
+  useEffect(() => {
+    const sendEmails = async () => {
+      if (verificationTime === 100 && !emailsSent && qrCodeGenerated) {
+        setEmailStatus('sending');
+        
+        try {
+          // Build guest count from booking data
+          const bookingType = bookingData.isFamilyTrip 
+            ? `Family Trip (${bookingData.numberOfFamilies} families)`
+            : bookingData.isGroup 
+              ? `Group Booking (${bookingData.guests} guests)`
+              : 'Individual Booking';
+
+          const guestCount = bookingData.isFamilyTrip
+            ? `${bookingData.totalAdults} adults${bookingData.totalChildren ? ` + ${bookingData.totalChildren} children` : ''}`
+            : `${bookingData.guests} guests`;
+
+          const formatDateForEmail = (dateStr: string) => {
+            if (!dateStr) return "Not selected";
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-US', { 
+              weekday: 'long', 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            });
+          };
+
+          // ✅ BUILD EMAIL DATA - ALL DATA FROM bookingData AND formData, NO HARDCODED VALUES
+          // In the sendEmails useEffect, update the emailData to use ALL tour data
+
+          const emailData: BookingEmailData = {
+            // ===== FROM formData =====
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            email: formData.email,
+            phone: formData.phone || 'Not provided',
+            country: formData.country || 'Not specified',
+            
+            customerName: `${formData.firstName} ${formData.lastName}`,
+            customerEmail: formData.email,
+            customerPhone: formData.phone || 'Not provided',
+            customerCountry: formData.country || 'Not specified',
+            
+            // ===== FROM bookingData =====
+            orderId: orderId,
+            bookingReferenceId: orderId,
+            tourName: bookingData.tourName,
+            tourDate: formatDateForEmail(bookingData.date),
+            packageType: bookingData.isFamilyTrip ? 'Family Package' : 
+                        bookingData.isGroup ? 'Group Package' : 'Standard Tour',
+            quantity: guestCount,
+            voucherNumber: `VOUCHER-${orderId}`,
+            totalPrice: `฿${bookingData.totalPrice.toLocaleString()}`,
+            bookingStatus: 'PENDING',
+            paymentStatus: 'Pending Verification',
+            
+            // ===== FROM formData - Accommodation =====
+            hotelName: formData.hotelName || 'Not provided',
+            hotelAddress: formData.hotelAddress || 'Not provided',
+            hotelRoom: formData.roomNumber || '',
+            
+            // ===== FROM formData - Flight =====
+            flightNumber: formData.flightNumber || '',
+            arrivalTime: formData.arrivalTime || '',
+            
+            // ===== FROM formData - Pickup =====
+            pickupLocation: formData.hotelName || 'Siam Journeys Meeting Point',
+            pickupTime: '08:30 AM',
+            
+            // ===== FROM formData - Emergency =====
+            emergencyName: formData.emergencyName || '',
+            emergencyPhone: formData.emergencyPhone || '',
+            emergencyEmail: formData.emergencyEmail || '',
+            emergencyRelation: formData.emergencyRelation || '',
+            
+            // ===== FROM formData - Special Requirements =====
+            dietaryNeeds: formData.dietaryNeeds || '',
+            accessibilityNeeds: formData.accessibilityNeeds || '',
+            specialRequests: formData.specialRequests || '',
+            
+            // ===== QR CODE =====
+            qrCodeDataUrl: qrCodeDataUrl,
+            qrCodeExternalUrl: qrCodeExternalUrl,
+            
+            // ✅ ===== FROM bookingData - FULL TOUR DATA (from DB or fallback) =====
+            departureTime: bookingData.tourStartTime || '08:00 AM',
+            returnTime: '04:00 PM',
+            itineraryStops: bookingData.tourItinerary?.map(item => ({
+              stop_name: item.title || item.time || 'Tour Stop',
+              stop_duration: item.time || '',
+              stop_type: ''
+            })) || [],
+            itineraryDisclaimer: 'Times are approximate and may vary based on traffic and weather conditions.',
+            
+            // ✅ ===== FROM bookingData - INCLUDED/EXCLUDED =====
+            includedItems: bookingData.tourIncluded || [],
+            excludedItems: bookingData.tourNotIncluded || [],
+            
+            // ===== CANCELLATION =====
+            cancellationPolicyText: 'Free cancellation up to 14 days before the tour date. Cancellations within 14 days will receive a credit voucher valid for 12 months. No-shows will be charged in full.',
+            cancellationDeadline: '14 days before the tour date',
+            
+            // ===== CONTACT =====
+            operatorName: 'Siam Journeys Bangkok',
+            operatorPhone: '+6692 475 9669',
+            operatorEmail: 'hello@siamjourneys.com',
+            operatorWebsite: 'https://siamjourneys.com',
+            supportNote: 'We\'re here to help! Contact us anytime at hello@siamjourneys.com or call +6692 475 9669',
+            
+            // ===== COMPANY =====
+            companyLogoUrl: 'https://siamjourneys.com/logo.png',
+            companyName: 'Siam Journeys Bangkok',
+          };
+
+          // ✅ DEBUG: Log email data being sent
+          console.log('📧 Email data being sent:', {
+            tourName: emailData.tourName,
+            includedItemsCount: emailData.includedItems?.length,
+            excludedItemsCount: emailData.excludedItems?.length,
+            itineraryStopsCount: emailData.itineraryStops?.length,
+            departureTime: emailData.departureTime,
+          });
+
+          // Send both emails with db status
+          const result = await sendBookingEmails(emailData, dbStatus !== 'offline');
+          
+          if (result.allSuccess) {
+            console.log('✅ Both emails sent successfully');
+            setEmailStatus('sent');
+            setEmailsSent(true);
+          } else {
+            console.warn('⚠️ Some emails failed:', result);
+            setEmailStatus('failed');
+            setEmailError('Some emails could not be sent. Please contact us if you don\'t receive your confirmation.');
+            setEmailsSent(true);
+          }
+        } catch (error) {
+          console.error('❌ Failed to send emails:', error);
+          setEmailStatus('failed');
+          setEmailError('Failed to send confirmation emails. Please contact us at hello@siamjourneys.com');
+          setEmailsSent(true);
+        }
+      }
+    };
+
+    sendEmails();
+  }, [verificationTime, emailsSent, qrCodeGenerated, qrCodeDataUrl, qrCodeExternalUrl, orderId, bookingData, formData, dbStatus]);
+
+  // ─── UTILITY FUNCTIONS ─────────────────────────────────────────────────────
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -111,34 +339,67 @@ export function BookingConfirmation() {
     });
   };
 
-  const isVerifying = verificationTime < 100;
+  const handleRetryEmails = async () => {
+    setEmailStatus('pending');
+    setEmailsSent(false);
+    setEmailError(null);
+    setTimeout(() => {
+      setVerificationTime(100);
+    }, 500);
+  };
 
+  const isVerifying = verificationTime < 100;
+  const isEmailSending = emailStatus === 'sending';
+  const isEmailSent = emailStatus === 'sent';
+  const isEmailFailed = emailStatus === 'failed';
+
+  // ─── RENDER ─────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#FAF7F2]">
-      {/* Success Header */}
+      {/* ── SUCCESS HEADER ── */}
       <div className="bg-[#2D4A3E] text-[#FAF7F2] py-12 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-[#FAF7F2]/10 rounded-full mb-6">
             {isVerifying ? (
               <Loader2 size={40} className="animate-spin text-[#FAF7F2]" />
+            ) : isEmailSending ? (
+              <Loader2 size={40} className="animate-spin text-[#FAF7F2]" />
+            ) : isEmailFailed ? (
+              <AlertCircle size={40} className="text-yellow-400" />
             ) : (
               <CheckCircle size={40} className="text-[#FAF7F2]" />
             )}
           </div>
           <h1 className="text-[32px]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
-            {isVerifying ? "Verifying Your Payment..." : "Payment Successful!"}
+            {isVerifying 
+              ? "Processing Your Booking..." 
+              : isEmailSending
+                ? "Sending Your Reservation Confirmation..."
+                : isEmailFailed
+                  ? "Booking Reserved - Email Issue"
+                  : "Booking Reserved! Waiting for Payment Verification"
+            }
           </h1>
           <p className="text-[#FAF7F2]/80 text-[16px] mt-3 max-w-2xl mx-auto">
             {isVerifying 
-              ? "Please wait while we verify your payment. This usually takes a few moments."
-              : "Your booking is confirmed! We're sending the details to your email."
+              ? "Please wait while we process your booking reservation..."
+              : isEmailSending
+                ? "We're sending your booking reservation details..."
+                : isEmailFailed
+                  ? "Your booking is reserved but we had trouble sending the email."
+                  : "Your booking has been reserved. We'll send the confirmation after payment verification."
             }
           </p>
+          {!isVerifying && !isEmailSending && !isEmailFailed && (
+            <p className="text-[#B8952A] text-[14px] mt-2 font-medium">
+              ⏳ Status: Pending Payment Verification
+            </p>
+          )}
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-6 py-12">
-        {/* Order ID Card */}
+        {/* ── ORDER ID CARD ── */}
         <div className="bg-white border border-border rounded-lg p-6 mb-8 shadow-sm">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
@@ -163,9 +424,9 @@ export function BookingConfirmation() {
                 Status
               </p>
               <div className="flex items-center gap-2 mt-1">
-                <div className={`w-2 h-2 rounded-full ${isVerifying ? 'bg-yellow-500 animate-pulse' : 'bg-green-500'}`} />
-                <span className={`text-[14px] font-medium ${isVerifying ? 'text-yellow-600' : 'text-green-600'}`}>
-                  {isVerifying ? 'Verifying...' : 'Confirmed'}
+                <div className="w-2 h-2 rounded-full bg-yellow-500" />
+                <span className="text-[14px] font-medium text-yellow-600">
+                  ⏳ Pending Verification
                 </span>
               </div>
             </div>
@@ -181,41 +442,128 @@ export function BookingConfirmation() {
                 />
               </div>
               <p className="text-[12px] text-[#7A6E60] mt-2">
-                Verifying payment... {Math.round(verificationTime)}%
+                Processing booking... {Math.round(verificationTime)}%
               </p>
+            </div>
+          )}
+
+          {/* Email sending status */}
+          {!isVerifying && emailStatus !== 'pending' && (
+            <div className={`mt-4 p-4 rounded-lg ${
+              isEmailSent ? 'bg-green-50 border border-green-200' :
+              isEmailFailed ? 'bg-yellow-50 border border-yellow-200' :
+              'bg-blue-50 border border-blue-200'
+            }`}>
+              <div className="flex items-start gap-3">
+                {isEmailSending && (
+                  <Loader2 size={20} className="animate-spin text-blue-500 flex-shrink-0 mt-0.5" />
+                )}
+                {isEmailSent && (
+                  <CheckCircle size={20} className="text-green-500 flex-shrink-0 mt-0.5" />
+                )}
+                {isEmailFailed && (
+                  <AlertCircle size={20} className="text-yellow-500 flex-shrink-0 mt-0.5" />
+                )}
+                <div className="flex-1">
+                  <p className={`text-[14px] font-medium ${
+                    isEmailSent ? 'text-green-700' :
+                    isEmailFailed ? 'text-yellow-700' :
+                    'text-blue-700'
+                  }`}>
+                    {isEmailSending && 'Sending reservation details...'}
+                    {isEmailSent && '✓ Reservation email sent successfully'}
+                    {isEmailFailed && '⚠️ Email sending issue detected'}
+                  </p>
+                  {isEmailSent && (
+                    <p className="text-[13px] text-green-600 mt-1">
+                      A reservation confirmation has been sent to {formData.email}
+                    </p>
+                  )}
+                  {isEmailFailed && emailError && (
+                    <p className="text-[13px] text-yellow-600 mt-1">
+                      {emailError}
+                    </p>
+                  )}
+                  {isEmailFailed && (
+                    <button
+                      onClick={handleRetryEmails}
+                      className="text-[12px] text-[#B8952A] hover:text-[#A47F22] transition-colors mt-2 underline font-medium"
+                    >
+                      Retry sending email
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* QR Code Preview */}
+          {qrCodeGenerated && qrCodeDataUrl && (
+            <div className="mt-4 pt-4 border-t border-border flex items-center gap-4">
+              <div className="w-16 h-16 bg-white rounded-lg border border-border p-1 flex-shrink-0">
+                <img 
+                  src={qrCodeDataUrl} 
+                  alt="QR Code" 
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${orderId}&color=1B2A4A&bgcolor=FFFFFF`;
+                  }}
+                />
+              </div>
+              <div>
+                <p className="text-[12px] font-medium text-[#2A2824]">QR Code</p>
+                <p className="text-[11px] text-[#7A6E60]">Scan this code at check-in (after payment verification)</p>
+                <a 
+                  href={qrCodeExternalUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-[11px] text-[#B8952A] hover:text-[#A47F22] transition-colors"
+                >
+                  View full size QR code →
+                </a>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Email Confirmation Message */}
+        {/* ── STATUS MESSAGE ── */}
         <div className="bg-[#EDE5D0] rounded-lg p-6 mb-8">
           <div className="flex items-start gap-4">
-            <Mail size={24} className="text-[#2D4A3E] flex-shrink-0 mt-1" />
+            <Clock size={24} className="text-[#2D4A3E] flex-shrink-0 mt-1" />
             <div>
               <h3 className="text-[16px] font-medium text-[#2A2824]">
-                We'll Confirm via Email
+                ⏳ Waiting for Payment Verification
               </h3>
               <p className="text-[13px] text-[#5A5248] mt-1">
-                A confirmation email with all your booking details will be sent to:
+                Your booking has been reserved. We are waiting for your payment verification.
               </p>
-              <p className="text-[14px] font-medium text-[#2A2824] mt-2">
-                {formData.email}
+              <p className="text-[13px] text-[#5A5248] mt-1 font-medium text-[#B8952A]">
+                You will receive the final booking confirmation via email once your payment is verified.
               </p>
-              <p className="text-[12px] text-[#7A6E60] mt-2 flex items-center gap-1">
-                <Clock size={14} />
-                You should receive it within the next 5-10 minutes
+              <p className="text-[12px] text-[#7A6E60] mt-2">
+                Order status: <span className="font-medium text-[#B8952A]">Pending Payment Verification</span>
               </p>
+              {isEmailSent && (
+                <p className="text-[12px] text-green-600 mt-2 flex items-center gap-1">
+                  <Check size={14} />
+                  Reservation email sent to {formData.email}
+                </p>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Booking Summary */}
+        {/* ── BOOKING SUMMARY - Using ALL data from bookingData ── */}
         <div className="bg-white border border-border rounded-lg p-6 mb-8 shadow-sm">
           <h2 className="text-[18px] text-[#2A2824] mb-4" style={{ fontFamily: SERIF, fontWeight: 400 }}>
             Booking Summary
           </h2>
           
           <div className="space-y-3">
+            <div className="flex justify-between text-[14px] py-2 border-b border-border/50">
+              <span className="text-[#7A6E60]">Order ID</span>
+              <span className="font-medium text-[#2A2824]">{orderId}</span>
+            </div>
             <div className="flex justify-between text-[14px] py-2 border-b border-border/50">
               <span className="text-[#7A6E60]">Tour</span>
               <span className="font-medium text-[#2A2824]">{bookingData.tourName}</span>
@@ -228,8 +576,8 @@ export function BookingConfirmation() {
               <span className="text-[#7A6E60]">Guests</span>
               <span className="font-medium text-[#2A2824]">
                 {bookingData.isFamilyTrip 
-                  ? `${bookingData.totalAdults} adults${bookingData.totalChildren ? ` + ${bookingData.totalChildren} children` : ''}`
-                  : `${bookingData.guests} guests`
+                  ? `${bookingData.totalAdults} adults${bookingData.totalChildren ? ` + ${bookingData.totalChildren} children` : ''} (${bookingData.numberOfFamilies} family${bookingData.numberOfFamilies && bookingData.numberOfFamilies > 1 ? 'ies' : ''})`
+                  : `${bookingData.guests} guests${bookingData.isGroup ? ` (Group of ${bookingData.groupMin}+)` : ''}`
                 }
               </span>
             </div>
@@ -237,8 +585,40 @@ export function BookingConfirmation() {
               <span className="text-[#7A6E60]">Guest Name</span>
               <span className="font-medium text-[#2A2824]">{formData.firstName} {formData.lastName}</span>
             </div>
+            <div className="flex justify-between text-[14px] py-2 border-b border-border/50">
+              <span className="text-[#7A6E60]">Email</span>
+              <span className="font-medium text-[#2A2824]">{formData.email}</span>
+            </div>
+            <div className="flex justify-between text-[14px] py-2 border-b border-border/50">
+              <span className="text-[#7A6E60]">Phone</span>
+              <span className="font-medium text-[#2A2824]">{formData.phone || 'Not provided'}</span>
+            </div>
+            {formData.hotelName && (
+              <div className="flex justify-between text-[14px] py-2 border-b border-border/50">
+                <span className="text-[#7A6E60]">Hotel</span>
+                <span className="font-medium text-[#2A2824]">{formData.hotelName}</span>
+              </div>
+            )}
+            {formData.hotelAddress && (
+              <div className="flex justify-between text-[14px] py-2 border-b border-border/50">
+                <span className="text-[#7A6E60]">Hotel Address</span>
+                <span className="font-medium text-[#2A2824]">{formData.hotelAddress}</span>
+              </div>
+            )}
+            {formData.flightNumber && (
+              <div className="flex justify-between text-[14px] py-2 border-b border-border/50">
+                <span className="text-[#7A6E60]">Flight</span>
+                <span className="font-medium text-[#2A2824]">{formData.flightNumber}</span>
+              </div>
+            )}
+            {formData.emergencyName && (
+              <div className="flex justify-between text-[14px] py-2 border-b border-border/50">
+                <span className="text-[#7A6E60]">Emergency Contact</span>
+                <span className="font-medium text-[#2A2824]">{formData.emergencyName} ({formData.emergencyRelation})</span>
+              </div>
+            )}
             <div className="flex justify-between text-[14px] py-2">
-              <span className="text-[#7A6E60]">Total Paid</span>
+              <span className="text-[#7A6E60]">Total Amount</span>
               <span className="font-bold text-[20px] text-[#B8952A]" style={{ fontFamily: SERIF }}>
                 ฿{bookingData.totalPrice.toLocaleString()}
               </span>
@@ -246,7 +626,29 @@ export function BookingConfirmation() {
           </div>
         </div>
 
-        {/* Next Steps */}
+        {/* ── QUICK CONTACT INFO ── */}
+        <div className="grid md:grid-cols-2 gap-4 mb-8">
+          <div className="bg-white border border-border rounded-lg p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Phone size={18} className="text-[#B8952A]" />
+              <div>
+                <p className="text-[11px] text-[#7A6E60]">Need help?</p>
+                <p className="text-[14px] font-medium text-[#2A2824]">+6692 475 9669</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white border border-border rounded-lg p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Mail size={18} className="text-[#B8952A]" />
+              <div>
+                <p className="text-[11px] text-[#7A6E60]">Email us</p>
+                <p className="text-[14px] font-medium text-[#2A2824]">hello@siamjourneys.com</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── NEXT STEPS ── */}
         <div className="bg-white border border-border rounded-lg p-6 mb-8 shadow-sm">
           <h3 className="text-[16px] text-[#2A2824] mb-4" style={{ fontFamily: SERIF, fontWeight: 400 }}>
             What's Next?
@@ -257,8 +659,10 @@ export function BookingConfirmation() {
                 <span className="text-[#2A2824] font-bold text-[14px]">1</span>
               </div>
               <div>
-                <p className="text-[14px] font-medium text-[#2A2824]">Check Your Email</p>
-                <p className="text-[13px] text-[#7A6E60]">We'll send a confirmation with all tour details</p>
+                <p className="text-[14px] font-medium text-[#2A2824]">Payment Verification</p>
+                <p className="text-[13px] text-[#7A6E60]">
+                  We are verifying your payment. This may take 24-48 hours.
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -266,8 +670,10 @@ export function BookingConfirmation() {
                 <span className="text-[#2A2824] font-bold text-[14px]">2</span>
               </div>
               <div>
-                <p className="text-[14px] font-medium text-[#2A2824]">Prepare for Your Tour</p>
-                <p className="text-[13px] text-[#7A6E60]">Review the details and contact us if you have questions</p>
+                <p className="text-[14px] font-medium text-[#2A2824]">Receive Confirmation</p>
+                <p className="text-[13px] text-[#7A6E60]">
+                  Once verified, we'll send your booking confirmation via email.
+                </p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -275,14 +681,16 @@ export function BookingConfirmation() {
                 <span className="text-[#2A2824] font-bold text-[14px]">3</span>
               </div>
               <div>
-                <p className="text-[14px] font-medium text-[#2A2824]">Enjoy Your Experience!</p>
-                <p className="text-[13px] text-[#7A6E60]">We look forward to welcoming you on your tour</p>
+                <p className="text-[14px] font-medium text-[#2A2824]">Enjoy Your Tour</p>
+                <p className="text-[13px] text-[#7A6E60]">
+                  Your tour is reserved. We look forward to welcoming you!
+                </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* ── ACTION BUTTONS ── */}
         <div className="flex flex-col sm:flex-row gap-4">
           <button
             onClick={() => navigate("/")}

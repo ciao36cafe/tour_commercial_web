@@ -6,6 +6,9 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 
+// ─── IMPORT LOCAL TOURS DATA FOR FALLBACK ───────────────────────────────────
+import { TOURS, Tour as TourType } from "../data/tours";
+
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const SERIF = "'Playfair Display', Georgia, serif";
 
@@ -503,12 +506,12 @@ function AvailableTours() {
   const [tours, setTours] = useState<Tour[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [usingFallback, setUsingFallback] = useState(false);
   const navigate = useNavigate();
   
-  // ✅ Single declaration
   const hasFetched = useRef(false);
 
-  console.log('🔍 State:', { loading, tours: tours.length, error });
+  console.log('🔍 State:', { loading, tours: tours.length, error, usingFallback });
 
   useEffect(() => {
     if (!hasFetched.current) {
@@ -517,16 +520,51 @@ function AvailableTours() {
     }
   }, []);
 
+  // ─── FALLBACK DATA FROM LOCAL TOURS.TS ──────────────────────────────────
+  const getFallbackTours = (): Tour[] => {
+    return TOURS.map((t: any) => ({
+      id: t.id,
+      name: t.name || 'Unnamed Tour',
+      tagline: t.tagline || '',
+      category: t.category || 'morning',
+      badges: t.badges || [],
+      rating: t.rating || 4.5,
+      reviews: t.reviews || 0,
+      duration: t.duration || '3 hours',
+      startTime: t.startTime || '09:00',
+      groupSize: t.groupSize || '2-12 people',
+      groupMin: t.groupMin || 4,
+      priceSingle: t.priceSingle || 0,
+      priceGroup: t.priceGroup || 0,
+      priceFam: t.priceFam || 0,
+      img: t.img || t.heroImg || '',
+      galleryImgs: t.galleryImgs || [],
+      included: t.included || [],
+      notIncluded: t.notIncluded || [],
+      highlights: t.highlights || [],
+      objectives: t.objectives || 'Explore Bangkok with our expert guides.',
+      zones: t.zones || ['Bangkok'],
+      dressCode: t.essentials?.dressCode || 'Comfortable clothing',
+      fitness: t.essentials?.fitness || 'Moderate',
+      agePolicy: t.essentials?.agePolicy || 'All ages welcome',
+      prep: t.essentials?.prep || ['Comfortable shoes', 'Camera'],
+      itinerary: t.itinerary || [],
+      isFeaturedTour: t.featured || false,
+      featured: t.featured || false,
+    }));
+  };
+
   const fetchTours = async () => {
     try {
       setLoading(true);
       setError(null);
+      setUsingFallback(false);
       
-      // ✅ This is the key - uses relative URL in production, localhost in dev
+      // ✅ First try: API call
       const API_URL = import.meta.env.PROD ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:8888');
       console.log('📍 API_URL:', API_URL);
       
-      // ✅ Health check - uses the SAME API_URL
+      // Health check
       let isReady = false;
       let attempts = 0;
       const maxAttempts = 3;
@@ -535,7 +573,6 @@ function AvailableTours() {
       
       while (!isReady && attempts < maxAttempts) {
         try {
-          // ✅ THIS IS THE FIX - uses API_URL variable
           const healthUrl = `${API_URL}/api/health`;
           console.log(`⏳ Checking: ${healthUrl}`);
           const healthResponse = await fetch(healthUrl);
@@ -554,19 +591,14 @@ function AvailableTours() {
         }
       }
       
-      // ✅ Don't throw error if health check fails - just try fetching
-      if (!isReady) {
-        console.warn('⚠️ API health check failed, but trying to fetch tours anyway...');
-      }
-      
+      // ✅ Try fetching tours
       console.log('🔍 Fetching tours...');
       const response = await fetch(`${API_URL}/api/tour-templates?active=true`);
       
       if (!response.ok) {
         if (response.status === 404) {
-          console.log('🔄 404 detected - refreshing page...');
-          window.location.reload();
-          return;
+          console.log('🔄 404 detected - using fallback data');
+          throw new Error('API not available - using fallback data');
         }
         throw new Error(`Failed to fetch tours: ${response.status}`);
       }
@@ -578,7 +610,7 @@ function AvailableTours() {
         throw new Error(result.error || 'Failed to fetch tours');
       }
       
-      // Map the data
+      // Map the API data
       const mappedTours: Tour[] = result.data.map((t: any) => ({
         id: t._id || t.id,
         name: t.name || 'Unnamed Tour',
@@ -612,9 +644,23 @@ function AvailableTours() {
       
       console.log('📊 Mapped tours:', mappedTours.length);
       setTours(mappedTours);
+      
     } catch (err) {
-      console.error('❌ Error fetching tours:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load tours');
+      console.error('❌ Error fetching from API:', err);
+      
+      // ✅ FALLBACK: Use local tours.ts data
+      console.log('📂 Using fallback data from tours.ts');
+      try {
+        const fallbackTours = getFallbackTours();
+        console.log('📊 Fallback tours loaded:', fallbackTours.length);
+        setTours(fallbackTours);
+        setUsingFallback(true);
+        setError(null); // Clear error when using fallback
+      } catch (fallbackErr) {
+        console.error('❌ Fallback also failed:', fallbackErr);
+        setError(err instanceof Error ? err.message : 'Failed to load tours');
+        setTours([]);
+      }
     } finally {
       setLoading(false);
       console.log('✅ Loading set to false');
@@ -622,7 +668,6 @@ function AvailableTours() {
   };
 
   // Get filtered tours based on category
-// Add logging
   const filteredTours = activeCategory === "all"
     ? tours
     : tours.filter((t) => t.category === activeCategory);
@@ -630,6 +675,7 @@ function AvailableTours() {
   console.log('📊 Active category:', activeCategory);
   console.log('📊 Total tours:', tours.length);
   console.log('📊 Filtered tours:', filteredTours.length);
+  
   // Find featured tour - ONLY from the filtered tours
   const featuredTour = filteredTours.length > 0 
     ? filteredTours.reduce((prev, current) => (prev.rating > current.rating) ? prev : current)
@@ -656,7 +702,7 @@ function AvailableTours() {
     );
   }
 
-  if (error) {
+  if (error && tours.length === 0) {
     return (
       <section id="tours" className="py-20 md:py-32 bg-background">
         <div className="max-w-7xl mx-auto px-6 xl:px-12">
@@ -687,9 +733,16 @@ function AvailableTours() {
               <br /><em>Your Journey</em>
             </h2>
           </div>
-          <p className="text-[14px] text-[#7A6E60] max-w-xs leading-relaxed md:text-right">
-            Every tour operates with our licensed convoy system, certified guides, and full guest insurance.
-          </p>
+          <div className="text-right">
+            <p className="text-[14px] text-[#7A6E60] max-w-xs leading-relaxed md:text-right">
+              Every tour operates with our licensed convoy system, certified guides, and full guest insurance.
+            </p>
+            {usingFallback && (
+              <p className="text-[11px] text-[#B8952A] mt-2 italic">
+                ⚡ Using sample tour data (offline mode)
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Filter bar */}

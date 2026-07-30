@@ -1,13 +1,10 @@
-// TourDetail.tsx (updated with fallback support)
+// TourDetail.tsx (updated with simpler sticky behavior)
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, Clock, Users, Star, Check, X, Shirt, Activity,
   UserCheck, List, Shield, ChevronDown, Phone, Calendar,
 } from "lucide-react";
-
-// ─── IMPORT LOCAL TOURS DATA FOR FALLBACK ───────────────────────────────────
-import { TOURS } from "../data/tours";
 
 const SERIF = "'Playfair Display', Georgia, serif";
 
@@ -28,7 +25,7 @@ interface ItineraryItem {
 interface Tour {
   _id?: string;
   id: string;
-  category: "morning" | "nightlife" | "cultural" | "local"| "full-day";
+  category: "morning" | "nightlife" | "cultural" | "local";
   featured?: boolean;
   name: string;
   tagline: string;
@@ -129,7 +126,6 @@ export function TourDetail() {
   const [tour, setTour] = useState<Tour | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [usingFallback, setUsingFallback] = useState(false);
 
   // UI state
   const [openItinerary, setOpenItinerary] = useState<number | null>(0);
@@ -142,48 +138,6 @@ export function TourDetail() {
   const [adultsPerFamily, setAdultsPerFamily] = useState(2);
   const [childrenPerFamily, setChildrenPerFamily] = useState(0);
 
-  // ─── FALLBACK DATA FROM LOCAL TOURS.TS ──────────────────────────────────
-  const getFallbackTour = (tourId: string): Tour | null => {
-    // Find the tour in TOURS data
-    const foundTour = TOURS.find((t: any) => t.id === tourId || t._id === tourId);
-    
-    if (!foundTour) return null;
-    
-    return {
-      _id: foundTour.id,
-      id: foundTour.id,
-      category: foundTour.category || 'cultural',
-      featured: foundTour.featured || false,
-      name: foundTour.name || 'Unnamed Tour',
-      tagline: foundTour.tagline || '',
-      duration: foundTour.duration || '3 hours',
-      startTime: foundTour.startTime || '09:00',
-      groupSize: foundTour.groupSize || '2-12 people',
-      priceSingle: foundTour.priceSingle || 0,
-      priceFam: foundTour.priceFam || 0,
-      priceGroup: foundTour.priceGroup || 0,
-      groupMin: foundTour.groupMin || 4,
-      rating: foundTour.rating || 4.5,
-      reviews: foundTour.reviews || 0,
-      img: foundTour.img || foundTour.heroImg || '',
-      heroImg: foundTour.heroImg || foundTour.img || '',
-      galleryImgs: foundTour.galleryImgs || [],
-      badges: foundTour.badges || [],
-      description: foundTour.description || foundTour.tagline || '',
-      highlights: foundTour.highlights || [],
-      included: foundTour.included || [],
-      notIncluded: foundTour.notIncluded || [],
-      itinerary: foundTour.itinerary || [],
-      essentials: {
-        dressCode: foundTour.essentials?.dressCode || 'Smart casual. Please cover shoulders and knees for temple visits.',
-        fitness: foundTour.essentials?.fitness || 'Moderate. Some walking and navigating steps.',
-        agePolicy: foundTour.essentials?.agePolicy || 'All ages welcome. Children under 12 must be accompanied by an adult.',
-        prep: foundTour.essentials?.prep || ['Comfortable shoes', 'Sunscreen', 'Camera']
-      },
-      metaDescription: foundTour.metaDescription || foundTour.tagline || `Experience ${foundTour.name} with Siam Journeys Bangkok.`
-    };
-  };
-
   // ============ FETCH TOUR DATA ============
   useEffect(() => {
     const fetchTour = async () => {
@@ -192,14 +146,13 @@ export function TourDetail() {
       try {
         setLoading(true);
         setError(null);
-        setUsingFallback(false);
         
         const API_URL = import.meta.env.PROD ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:5001');
         const response = await fetch(`${API_URL}/api/tour-templates/${id}`);
         
         if (!response.ok) {
           if (response.status === 404) {
-            throw new Error('Tour not found - checking local data');
+            throw new Error('Tour not found');
           }
           throw new Error(`Failed to fetch tour: ${response.status}`);
         }
@@ -212,7 +165,6 @@ export function TourDetail() {
             _id: tourData._id,
             id: tourData._id,
             category: tourData.category || 'cultural',
-            featured: tourData.featured || false,
             name: tourData.name || 'Unnamed Tour',
             tagline: tourData.tagline || '',
             duration: tourData.duration || `${tourData.default_duration_minutes || 180} min`,
@@ -248,22 +200,8 @@ export function TourDetail() {
           throw new Error('Tour data not found');
         }
       } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load tour');
         console.error('Error fetching tour:', err);
-        
-        // ✅ FALLBACK: Try local data
-        console.log('📂 Trying fallback data from tours.ts');
-        const fallbackTour = getFallbackTour(id);
-        
-        if (fallbackTour) {
-          console.log('✅ Fallback tour found:', fallbackTour.name);
-          setTour(fallbackTour);
-          setUsingFallback(true);
-          setError(null);
-          document.title = `${fallbackTour.name} | Siam Journeys Bangkok`;
-        } else {
-          setError(err instanceof Error ? err.message : 'Tour not found');
-          setTour(null);
-        }
       } finally {
         setLoading(false);
       }
@@ -309,17 +247,13 @@ export function TourDetail() {
 
   const getMaxChildrenPerFamily = () => 2;
 
-  // src/pages/TourDetail.tsx - handleBookNow function
-
   const handleBookNow = () => {
     if (!date) {
       alert("Please select a preferred date.");
       return;
     }
 
-    // ✅ Pass ALL tour data including fallback data
     const bookingData = {
-      // Basic booking info
       tourId: tour.id,
       tourName: tour.name,
       date: date,
@@ -337,26 +271,7 @@ export function TourDetail() {
       groupMin: tour.groupMin,
       priceSingle: tour.priceSingle,
       priceGroup: tour.priceGroup,
-      
-      // ✅ FULL TOUR DATA (from tour object - could be from DB or fallback)
-      tourDescription: tour.description,
-      tourHighlights: tour.highlights,
-      tourIncluded: tour.included,          // ✅ From fallback if DB is down
-      tourNotIncluded: tour.notIncluded,    // ✅ From fallback if DB is down
-      tourItinerary: tour.itinerary,        // ✅ From fallback if DB is down
-      tourEssentials: tour.essentials,
-      tourDuration: tour.duration,
-      tourStartTime: tour.startTime,
     };
-    
-    console.log('📤 TourDetail sending to BookingPage:', {
-      tourName: bookingData.tourName,
-      hasIncluded: !!bookingData.tourIncluded,
-      includedCount: bookingData.tourIncluded?.length,
-      hasItinerary: !!bookingData.tourItinerary,
-      itineraryCount: bookingData.tourItinerary?.length,
-      isFallback: usingFallback
-    });
     
     navigate('/booking', { state: bookingData });
   };
@@ -434,11 +349,6 @@ export function TourDetail() {
               {tour.name}
             </h1>
             <p className="text-[#FAF7F2]/70 text-[15px] max-w-xl">{tour.tagline}</p>
-            {usingFallback && (
-              <p className="text-[11px] text-[#B8952A] mt-2 italic">
-                ⚡ Using sample tour data (offline mode)
-              </p>
-            )}
           </div>
         </div>
       </div>

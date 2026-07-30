@@ -1,4 +1,4 @@
-// TourList.tsx (updated with fallback support)
+// TourList.tsx
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -11,9 +11,6 @@ import {
   X,
   Sparkles,
 } from "lucide-react";
-
-// ─── IMPORT LOCAL TOURS DATA FOR FALLBACK ───────────────────────────────────
-import { TOURS } from "../data/tours";
 
 const SERIF = "'Playfair Display', Georgia, serif";
 
@@ -101,7 +98,7 @@ function TourCard({ tour }: { tour: TourTemplate }) {
   return (
     <div 
       className="group bg-[#FFFDF8] border border-border hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden"
-      onClick={() => navigate(`/tours/${tourId}`)}
+      onClick={() => navigate(`/tours/${tourId}`)} // Changed from /tour/ to /tours/
     >
       {/* Image */}
       <div className="relative overflow-hidden bg-[#C8BBA6]" style={{ aspectRatio: "16/10" }}>
@@ -110,7 +107,7 @@ function TourCard({ tour }: { tour: TourTemplate }) {
           alt={tour.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1582468546235-9bf31e5bc4a1?w=800&h=500&fit=crop&auto=format";
+            (e.target as HTMLImageElement).src = "/images/tour-placeholder.jpg";
           }}
         />
         
@@ -184,7 +181,7 @@ function TourCard({ tour }: { tour: TourTemplate }) {
             className="flex items-center gap-1 text-[11px] tracking-[0.12em] uppercase text-[#B8952A] hover:text-[#A47F22] transition-colors group-hover:gap-2"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/tours/${tourId}`);
+              navigate(`/tours/${tourId}`); // Changed from /tour/ to /tours/
             }}
           >
             View Details
@@ -205,7 +202,6 @@ export function TourList() {
   const [tours, setTours] = useState<TourTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [usingFallback, setUsingFallback] = useState(false);
   const [pagination, setPagination] = useState<PaginationInfo>({
     page: 1,
     limit: 20,
@@ -226,36 +222,11 @@ export function TourList() {
     parseInt(searchParams.get('page') || '1')
   );
 
-  // ─── FALLBACK DATA FROM LOCAL TOURS.TS ──────────────────────────────────
-  const getFallbackTours = (): TourTemplate[] => {
-    return TOURS.map((t: any) => ({
-      _id: t.id,
-      id: t.id,
-      name: t.name || 'Unnamed Tour',
-      description: t.description || t.tagline || '',
-      tagline: t.tagline || '',
-      category: t.category || 'cultural',
-      duration: t.duration || '3 hours',
-      start_time: t.startTime || '09:00',
-      group_size: t.groupSize || `${t.groupMin || 2}+ people`,
-      group_min: t.groupMin || 4,
-      price_single: t.priceSingle || 0,
-      price_group: t.priceGroup || 0,
-      rating: t.rating || 4.5,
-      reviews: t.reviews || 0,
-      hero_img: t.img || t.heroImg || 'https://images.unsplash.com/photo-1582468546235-9bf31e5bc4a1?w=800&h=500&fit=crop&auto=format',
-      badges: t.badges || [],
-      is_active: true,
-      default_duration_minutes: parseInt(t.duration) || 180,
-    }));
-  };
-
   // ============ FETCH TOURS ============
   const fetchTours = async (page = 1) => {
     try {
       setLoading(true);
       setError(null);
-      setUsingFallback(false);
       
       const API_URL = import.meta.env.PROD ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:5001');
       
@@ -292,6 +263,7 @@ export function TourList() {
         if (result.categories) {
           setCategories(result.categories);
         } else {
+          // ✅ Fixed: Add type assertion and filter
           const uniqueCategories = [...new Set(result.data.map((t: TourTemplate) => t.category as string))].filter(Boolean) as string[];
           setCategories(uniqueCategories);
         }
@@ -301,34 +273,8 @@ export function TourList() {
         throw new Error(result.error || 'Failed to fetch tours');
       }
     } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load tours');
       console.error('Error fetching tours:', err);
-      
-      // ✅ FALLBACK: Use local tours.ts data
-      console.log('📂 Using fallback data from tours.ts');
-      try {
-        const fallbackTours = getFallbackTours();
-        console.log('📊 Fallback tours loaded:', fallbackTours.length);
-        setTours(fallbackTours);
-        setUsingFallback(true);
-        setError(null);
-        
-        // Extract unique categories from fallback data
-        const uniqueCategories = [...new Set(fallbackTours.map((t: TourTemplate) => t.category))].filter(Boolean) as string[];
-        setCategories(uniqueCategories);
-        
-        // Set pagination for fallback
-        setPagination({
-          page: 1,
-          limit: fallbackTours.length,
-          total: fallbackTours.length,
-          pages: 1,
-        });
-        setCurrentPage(1);
-      } catch (fallbackErr) {
-        console.error('❌ Fallback also failed:', fallbackErr);
-        setError(err instanceof Error ? err.message : 'Failed to load tours');
-        setTours([]);
-      }
     } finally {
       setLoading(false);
     }
@@ -472,9 +418,6 @@ export function TourList() {
               {loading ? "Loading..." : `${tours.length} tour${tours.length !== 1 ? 's' : ''} found`}
               {selectedCategory && ` in ${selectedCategory}`}
               {searchQuery && ` matching "${searchQuery}"`}
-              {usingFallback && (
-                <span className="ml-2 text-[11px] text-[#B8952A] italic">(offline mode)</span>
-              )}
             </span>
             <div className="flex items-center gap-3">
               {(selectedCategory || searchQuery) && (
