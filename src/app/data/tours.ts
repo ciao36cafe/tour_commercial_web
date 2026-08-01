@@ -22,10 +22,22 @@ export interface Tour {
   duration: string;
   startTime: string;
   groupSize: string;
-  priceSingle: number;
-  priceFam: number;
-  priceGroup: number;
-  groupMin: number;
+  // Removed: priceSingle, priceFam, priceGroup, groupMin
+  pricing: {
+    priceAdult: number;
+    priceChild: number;
+    priceSoloPrivate: number;
+    priceGroup: number;
+    groupMin: number;
+    packages: {
+      key: string;
+      label: string;
+      price: number;
+      adults: number;
+      childrenMin: number;
+      childrenMax: number;
+    }[];
+  };
   rating: number;
   reviews: number;
   img: string;
@@ -51,116 +63,134 @@ export const TOURS: Tour[] = [
     duration: "8 Hours",
     startTime: "7:30 AM",
     groupSize: "Max 12 guests",
-    priceSingle: 1599,
-    priceFam: 3250,
-    priceGroup: 1399,
-    groupMin: 10,
+    pricing: {
+        priceAdult: 1599,
+        priceChild: 799,
+        priceSoloPrivate: 3200,
+        priceGroup: 1399,
+        groupMin: 10,
+        packages: [
+            {
+                key: "family",
+                label: "Family Package",
+                price: 3250,
+                adults: 2,
+                childrenMin: 1,
+                childrenMax: 2
+            },
+            {
+                key: "couple",
+                label: "Comfort Package",
+                price: 2900,
+                adults: 2,
+                childrenMin: 0,
+                childrenMax: 0
+            },
+            {
+                key: "adventure",
+                label: "Adventure Package",
+                price: 3799,
+                adults: 3,
+                childrenMin: 0,
+                childrenMax: 0
+            }
+        ]
+    },
     rating: 4.9,
     reviews: 284,
     img: "https://images.unsplash.com/photo-1776941452020-822b4901446b?w=800&h=520&fit=crop&auto=format",
     heroImg: "https://images.unsplash.com/photo-1582468546235-9bf31e5bc4a1?w=1600&h=700&fit=crop&auto=format",
     galleryImgs: [
-      "https://images.unsplash.com/photo-1776941452020-822b4901446b?w=600&h=420&fit=crop&auto=format",
-      "https://images.unsplash.com/photo-1678263001211-b1c2f231b5e7?w=600&h=420&fit=crop&auto=format",
-      "https://images.unsplash.com/photo-1769848754718-be02141c6cc3?w=600&h=420&fit=crop&auto=format",
-      "https://images.unsplash.com/photo-1563492065599-3520f775eeed?w=600&h=420&fit=crop&auto=format",
+        "https://images.unsplash.com/photo-1776941452020-822b4901446b?w=600&h=420&fit=crop&auto=format",
+        "https://images.unsplash.com/photo-1678263001211-b1c2f231b5e7?w=600&h=420&fit=crop&auto=format",
+        "https://images.unsplash.com/photo-1769848754718-be02141c6cc3?w=600&h=420&fit=crop&auto=format",
+        "https://images.unsplash.com/photo-1563492065599-3520f775eeed?w=600&h=420&fit=crop&auto=format"
     ],
     badges: ["Expert Guide", "Public Transport Logistics", "Small Group Policy"],
-    metaDescription:
-      "Experience Bangkok's living culture on our flagship 8-hour tuk-tuk journey — temples, markets, and authentic cuisine. From 1,599 THB per person. Groups of 10+ from 1,399 THB.",
-    description:
-      "Bangkok holds eight centuries of layered history, and most of it is invisible from a tour bus window. Into the Thai Culture takes you off the arterial roads and into the quiet lanes that connect the city's most significant spiritual sites — by tuk-tuk, by foot, and by public boat on the Chao Phraya. Your licensed guide navigates not just the geography, but the meaning: the ritual significance of each temple, the social history of the market quarter, the unwritten rules of Thai hospitality that make this city unlike anywhere else in Asia.",
+    metaDescription: "Experience Bangkok's living culture on our flagship 8-hour tuk-tuk journey — temples, markets, and authentic cuisine. From 1,599 THB per person. Groups of 10+ from 1,399 THB.",
+    description: "Bangkok holds eight centuries of layered history, and most of it is invisible from a tour bus window. Into the Thai Culture takes you off the arterial roads and into the quiet lanes that connect the city's most significant spiritual sites — by tuk-tuk, by foot, and by public boat on the Chao Phraya. Your licensed guide navigates not just the geography, but the meaning: the ritual significance of each temple, the social history of the market quarter, the unwritten rules of Thai hospitality that make this city unlike anywhere else in Asia.",
     highlights: [
-      "Rattanakosin Island and the Grand Palace district",
-      "Wat Pho — the Temple of the Reclining Buddha",
-      "Pak Khlong Talat flower market at dawn",
-      "Authentic Thai breakfast with a local vendor family",
-      "Cross the Chao Phraya by public express boat",
-      "Wat Arun — the Temple of Dawn, from the riverside",
-      "Traditional Thai lunch at a family-run shophouse restaurant",
-      "Chinatown (Yaowarat) and the gold traders' quarter",
+        "Rattanakosin Island and the Grand Palace district",
+        "Wat Pho — the Temple of the Reclining Buddha",
+        "Pak Khlong Talat flower market at dawn",
+        "Authentic Thai breakfast with a local vendor family",
+        "Cross the Chao Phraya by public express boat",
+        "Wat Arun — the Temple of Dawn, from the riverside",
+        "Traditional Thai lunch at a family-run shophouse restaurant",
+        "Chinatown (Yaowarat) and the gold traders' quarter"
     ],
     included: [
-      "Licensed TAT cultural guide (English-speaking)",
-      "All tuk-tuk transportation within the convoy",
-      "Public river-boat tickets",
-      "Traditional Thai breakfast",
-      "Set Thai lunch at a vetted local restaurant",
-      "Temple entry fees",
-      "Bottled water throughout",
-      "Fully comprehensive personal accident insurance",
+        "Licensed TAT cultural guide (English-speaking)",
+        "All tuk-tuk transportation within the convoy",
+        "Public river-boat tickets",
+        "Traditional Thai breakfast",
+        "Set Thai lunch at a vetted local restaurant",
+        "Temple entry fees",
+        "Bottled water throughout",
+        "Fully comprehensive personal accident insurance"
     ],
     notIncluded: [
-      "Personal purchases and souvenirs",
-      "Gratuities (at your discretion)",
-      "Airport or hotel transfers",
+        "Personal purchases and souvenirs",
+        "Gratuities (at your discretion)",
+        "Airport or hotel transfers"
     ],
     itinerary: [
-      {
-        time: "7:30 AM",
-        title: "Convoy Briefing & Departure",
-        description:
-          "Meet your guide at the designated meeting point in Phra Nakhon district. 10-minute safety briefing, introduction to the convoy system, and route overview before departure.",
-      },
-      {
-        time: "8:00 AM",
-        title: "Pak Khlong Talat — The Flower Market",
-        description:
-          "Arrive at Bangkok's wholesale flower market at its most atmospheric hour. Your guide explains the significance of jasmine garlands in Buddhist merit-making, and you share a traditional Thai breakfast with one of the vendor families.",
-      },
-      {
-        time: "9:30 AM",
-        title: "Wat Pho & the Reclining Buddha",
-        description:
-          "Enter one of Thailand's oldest and most architecturally complex temple compounds. Your guide decodes the murals, the medicinal inscriptions, and the tradition of the reclining Buddha — a 46-metre gilded figure that has watched over this site for two hundred years.",
-      },
-      {
-        time: "11:00 AM",
-        title: "The Chao Phraya by Public Boat",
-        description:
-          "Board the express river boat — the city's oldest transit system — and cross to Thonburi. Your guide provides commentary on the riverside communities, the historic royal barges, and the ecological role of the river in Bangkok's urban fabric.",
-      },
-      {
-        time: "11:45 AM",
-        title: "Wat Arun — Temple of Dawn",
-        description:
-          "Climb the steep prangs of one of Bangkok's most iconic riverside landmarks. The porcelain-encrusted spires, best photographed from the river, tell the story of King Taksin's short-lived capital across the water.",
-      },
-      {
-        time: "1:00 PM",
-        title: "Traditional Thai Lunch",
-        description:
-          "A set Thai lunch at a three-generation shophouse restaurant in Thonburi — a neighbourhood untouched by tourism. Your guide introduces the dishes and the family.",
-      },
-      {
-        time: "2:30 PM",
-        title: "Chinatown & the Gold Quarter (Yaowarat)",
-        description:
-          "Tuk-tuk convoy through Chinatown — one of the world's largest — pausing at the gold traders' street, the Chinese-Thai temples, and the herbalist quarter. Free time to explore the alleyways independently.",
-      },
-      {
-        time: "3:30 PM",
-        title: "Return & Farewell",
-        description:
-          "Convoy returns to the original meeting point. Guide debrief, reflection journal handover (for educational groups), and guide contact badge activation for booking confirmation recipients.",
-      },
+        {
+            time: "7:30 AM",
+            title: "Convoy Briefing & Departure",
+            description: "Meet your guide at the designated meeting point in Phra Nakhon district. 10-minute safety briefing, introduction to the convoy system, and route overview before departure."
+        },
+        {
+            time: "8:00 AM",
+            title: "Pak Khlong Talat — The Flower Market",
+            description: "Arrive at Bangkok's wholesale flower market at its most atmospheric hour. Your guide explains the significance of jasmine garlands in Buddhist merit-making, and you share a traditional Thai breakfast with one of the vendor families."
+        },
+        {
+            time: "9:30 AM",
+            title: "Wat Pho & the Reclining Buddha",
+            description: "Enter one of Thailand's oldest and most architecturally complex temple compounds. Your guide decodes the murals, the medicinal inscriptions, and the tradition of the reclining Buddha — a 46-metre gilded figure that has watched over this site for two hundred years."
+        },
+        {
+            time: "11:00 AM",
+            title: "The Chao Phraya by Public Boat",
+            description: "Board the express river boat — the city's oldest transit system — and cross to Thonburi. Your guide provides commentary on the riverside communities, the historic royal barges, and the ecological role of the river in Bangkok's urban fabric."
+        },
+        {
+            time: "11:45 AM",
+            title: "Wat Arun — Temple of Dawn",
+            description: "Climb the steep prangs of one of Bangkok's most iconic riverside landmarks. The porcelain-encrusted spires, best photographed from the river, tell the story of King Taksin's short-lived capital across the water."
+        },
+        {
+            time: "1:00 PM",
+            title: "Traditional Thai Lunch",
+            description: "A set Thai lunch at a three-generation shophouse restaurant in Thonburi — a neighbourhood untouched by tourism. Your guide introduces the dishes and the family."
+        },
+        {
+            time: "2:30 PM",
+            title: "Chinatown & the Gold Quarter (Yaowarat)",
+            description: "Tuk-tuk convoy through Chinatown — one of the world's largest — pausing at the gold traders' street, the Chinese-Thai temples, and the herbalist quarter. Free time to explore the alleyways independently."
+        },
+        {
+            time: "3:30 PM",
+            title: "Return & Farewell",
+            description: "Convoy returns to the original meeting point. Guide debrief, reflection journal handover (for educational groups), and guide contact badge activation for booking confirmation recipients."
+        }
     ],
     essentials: {
-      dressCode:
-        "Shoulders and knees must be covered at all temple sites. We recommend carrying a sarong or light scarf. Clothing that does not meet the dress code will result in denied temple entry.",
-      fitness:
-        "Moderate. The tour includes approximately 3–4 km of walking across uneven temple grounds and some steep stairways at Wat Arun. Comfortable, closed-toe shoes are strongly recommended.",
-      agePolicy:
-        "Guests aged 18 and above may participate unaccompanied. Guests aged 12–17 are welcome when accompanied by a guardian aged 21 or above. Children under 12 are not admitted on this tour.",
-      prep: [
-        "Personal pen (required for temple entry forms at Grand Palace)",
-        "Reusable water bottle (water stations provided throughout)",
-        "Small flashlight or phone torch (some interior temple spaces are dimly lit)",
-        "Cash in Thai Baht for personal purchases",
-      ],
-    },
-  },
-  {
+        dressCode: "Shoulders and knees must be covered at all temple sites. We recommend carrying a sarong or light scarf. Clothing that does not meet the dress code will result in denied temple entry.",
+        fitness: "Moderate. The tour includes approximately 3–4 km of walking across uneven temple grounds and some steep stairways at Wat Arun. Comfortable, closed-toe shoes are strongly recommended.",
+        agePolicy: "Guests aged 18 and above may participate unaccompanied. Guests aged 12–17 are welcome when accompanied by a guardian aged 21 or above. Children under 12 are not admitted on this tour.",
+        prep: [
+            "Personal pen (required for temple entry forms at Grand Palace)",
+            "Reusable water bottle (water stations provided throughout)",
+            "Small flashlight or phone torch (some interior temple spaces are dimly lit)",
+            "Cash in Thai Baht for personal purchases"
+        ]
+    }
+},
+
+
+{
     id: "dawn-at-the-flower-market",
     category: "morning",
     name: "Dawn at the Flower Market",
@@ -168,10 +198,6 @@ export const TOURS: Tour[] = [
     duration: "3 Hours",
     startTime: "5:30 AM",
     groupSize: "Max 8 guests",
-    priceSingle: 799,
-    priceFam: 3250,
-    priceGroup: 699,
-    groupMin: 6,
     rating: 4.8,
     reviews: 156,
     img: "https://images.unsplash.com/photo-1595632798355-61f1a6f99c37?w=800&h=520&fit=crop&auto=format",
@@ -181,10 +207,8 @@ export const TOURS: Tour[] = [
       "https://images.unsplash.com/photo-1591233244187-ffd622c51fbd?w=600&h=420&fit=crop&auto=format",
     ],
     badges: ["Expert Guide", "Small Group Policy", "Fully Insured"],
-    metaDescription:
-      "Join Siam Journeys at Bangkok's Pak Khlong Talat flower market before sunrise — the city's most sensory experience. 3-hour morning tour from 799 THB.",
-    description:
-      "Pak Khlong Talat is Bangkok's wholesale flower market — and at 5:30 in the morning, it is one of the most sensory-rich environments on earth. The scent of a thousand jasmine garlands. Traders wrapping lotus blooms by torch-light. Monks collecting alms at the canal edge. This three-hour experience takes you into the heart of the market with a guide who knows every vendor personally — and ends with a traditional Thai breakfast as the sun rises over the Chao Phraya.",
+    metaDescription: "Join Siam Journeys at Bangkok's Pak Khlong Talat flower market before sunrise — the city's most sensory experience. 3-hour morning tour from 799 THB.",
+    description: "Pak Khlong Talat is Bangkok's wholesale flower market — and at 5:30 in the morning, it is one of the most sensory-rich environments on earth. The scent of a thousand jasmine garlands. Traders wrapping lotus blooms by torch-light. Monks collecting alms at the canal edge. This three-hour experience takes you into the heart of the market with a guide who knows every vendor personally — and ends with a traditional Thai breakfast as the sun rises over the Chao Phraya.",
     highlights: [
       "Wholesale flower market before the city wakes",
       "Traditional merit-making — offering flowers at a canalside shrine",
@@ -217,8 +241,41 @@ export const TOURS: Tour[] = [
         "Light jacket (mornings near the river can be cool)",
       ],
     },
-  },
-  {
+    pricing: {
+        priceAdult: 799,
+        priceChild: 399,
+        priceSoloPrivate: 1600,
+        priceGroup: 699,
+        groupMin: 6,
+        packages: [
+            {
+                key: "family",
+                label: "Family Package",
+                price: 1625,
+                adults: 2,
+                childrenMin: 1,
+                childrenMax: 2
+            },
+            {
+                key: "couple",
+                label: "Comfort Package",
+                price: 1450,
+                adults: 2,
+                childrenMin: 0,
+                childrenMax: 0
+            },
+            {
+                key: "adventure",
+                label: "Adventure Package",
+                price: 1900,
+                adults: 3,
+                childrenMin: 0,
+                childrenMax: 0
+            }
+        ]
+    }
+},
+{
     id: "bangkok-after-dark",
     category: "nightlife",
     name: "Bangkok After Dark",
@@ -226,10 +283,6 @@ export const TOURS: Tour[] = [
     duration: "4 Hours",
     startTime: "6:30 PM",
     groupSize: "Max 10 guests",
-    priceSingle: 1099,
-    priceFam: 3250,
-    priceGroup: 949,
-    groupMin: 8,
     rating: 4.7,
     reviews: 198,
     img: "https://images.unsplash.com/photo-1656299435456-41f88298b11c?w=800&h=520&fit=crop&auto=format",
@@ -239,10 +292,8 @@ export const TOURS: Tour[] = [
       "https://images.unsplash.com/photo-1694501898583-7caca30dde01?w=600&h=420&fit=crop&auto=format",
     ],
     badges: ["Expert Guide", "Convoy Safety System", "Fully Insured"],
-    metaDescription:
-      "Bangkok's authentic night scene — markets, rooftop shrines, and hidden bars — on a 4-hour evening tuk-tuk convoy. From 1,099 THB. Book with Siam Journeys.",
-    description:
-      "Bangkok after dark is a different city. The heat softens, the neon sharpens, and the neighbourhoods that are quiet by day become the social centre of Thai urban life. Bangkok After Dark bypasses the tourist nightlife corridor entirely — instead taking you to a rooftop spirit shrine, a third-generation Thai craft cocktail bar in the old quarter, an evening floating market, and a street food circuit that your guide has curated over fifteen years of living in this city at night.",
+    metaDescription: "Bangkok's authentic night scene — markets, rooftop shrines, and hidden bars — on a 4-hour evening tuk-tuk convoy. From 1,099 THB. Book with Siam Journeys.",
+    description: "Bangkok after dark is a different city. The heat softens, the neon sharpens, and the neighbourhoods that are quiet by day become the social centre of Thai urban life. Bangkok After Dark bypasses the tourist nightlife corridor entirely — instead taking you to a rooftop spirit shrine, a third-generation Thai craft cocktail bar in the old quarter, an evening floating market, and a street food circuit that your guide has curated over fifteen years of living in this city at night.",
     highlights: [
       "Rooftop spirit shrine — a Bangkok ritual invisible to most visitors",
       "Evening floating market, Thonburi side",
@@ -277,8 +328,41 @@ export const TOURS: Tour[] = [
         "Cash for personal food and drink purchases",
       ],
     },
-  },
-  {
+    pricing: {
+        priceAdult: 1099,
+        priceChild: 549,
+        priceSoloPrivate: 2200,
+        priceGroup: 949,
+        groupMin: 8,
+        packages: [
+            {
+                key: "family",
+                label: "Family Package",
+                price: 2200,
+                adults: 2,
+                childrenMin: 1,
+                childrenMax: 2
+            },
+            {
+                key: "couple",
+                label: "Comfort Package",
+                price: 1990,
+                adults: 2,
+                childrenMin: 0,
+                childrenMax: 0
+            },
+            {
+                key: "adventure",
+                label: "Adventure Package",
+                price: 2600,
+                adults: 3,
+                childrenMin: 0,
+                childrenMax: 0
+            }
+        ]
+    }
+},
+{
     id: "chinatown-night-walk",
     category: "nightlife",
     name: "Chinatown Night Walk",
@@ -286,10 +370,6 @@ export const TOURS: Tour[] = [
     duration: "3 Hours",
     startTime: "7:00 PM",
     groupSize: "Max 10 guests",
-    priceSingle: 899,
-    priceFam: 3250,
-    priceGroup: 799,
-    groupMin: 8,
     rating: 4.8,
     reviews: 143,
     img: "https://images.unsplash.com/photo-1694501898583-7caca30dde01?w=800&h=520&fit=crop&auto=format",
@@ -298,10 +378,8 @@ export const TOURS: Tour[] = [
       "https://images.unsplash.com/photo-1694501898583-7caca30dde01?w=600&h=420&fit=crop&auto=format",
     ],
     badges: ["Expert Guide", "Small Group Policy", "Fully Insured"],
-    metaDescription:
-      "Bangkok's Chinatown (Yaowarat) after dark — a focused 3-hour street food and culture walk with a licensed guide. From 899 THB per person.",
-    description:
-      "Yaowarat Road is the gastronomic spine of one of the world's great Chinatowns — and at 7pm, it is at full sensory capacity. This focused three-hour walk takes you from the gold traders' lane to the seafood stalls, through the Talat Noi artist quarter, and into the unmarked alleys where the best food in the district has been served for three generations. Your guide is a Bangkokian of Chinese-Thai heritage who navigates this neighbourhood as a local, not a tour guide.",
+    metaDescription: "Bangkok's Chinatown (Yaowarat) after dark — a focused 3-hour street food and culture walk with a licensed guide. From 899 THB per person.",
+    description: "Yaowarat Road is the gastronomic spine of one of the world's great Chinatowns — and at 7pm, it is at full sensory capacity. This focused three-hour walk takes you from the gold traders' lane to the seafood stalls, through the Talat Noi artist quarter, and into the unmarked alleys where the best food in the district has been served for three generations. Your guide is a Bangkokian of Chinese-Thai heritage who navigates this neighbourhood as a local, not a tour guide.",
     highlights: [
       "Yaowarat Road at full evening intensity",
       "The gold traders' lane and Chinese-Thai temples",
@@ -333,8 +411,41 @@ export const TOURS: Tour[] = [
         "Comfortable shoes",
       ],
     },
-  },
-  {
+    pricing: {
+        priceAdult: 899,
+        priceChild: 450,
+        priceSoloPrivate: 1800,
+        priceGroup: 799,
+        groupMin: 8,
+        packages: [
+            {
+                key: "family",
+                label: "Family Package",
+                price: 1800,
+                adults: 2,
+                childrenMin: 1,
+                childrenMax: 2
+            },
+            {
+                key: "couple",
+                label: "Comfort Package",
+                price: 1625,
+                adults: 2,
+                childrenMin: 0,
+                childrenMax: 0
+            },
+            {
+                key: "adventure",
+                label: "Adventure Package",
+                price: 2150,
+                adults: 3,
+                childrenMin: 0,
+                childrenMax: 0
+            }
+        ]
+    }
+},
+{
     id: "ancient-temple-circuit",
     category: "cultural",
     name: "The Ancient Temple Circuit",
@@ -342,10 +453,6 @@ export const TOURS: Tour[] = [
     duration: "5 Hours",
     startTime: "8:00 AM",
     groupSize: "Max 12 guests",
-    priceSingle: 1199,
-    priceFam: 3250,
-    priceGroup: 1049,
-    groupMin: 10,
     rating: 4.8,
     reviews: 211,
     img: "https://images.unsplash.com/photo-1678263001211-b1c2f231b5e7?w=800&h=520&fit=crop&auto=format",
@@ -355,10 +462,8 @@ export const TOURS: Tour[] = [
       "https://images.unsplash.com/photo-1769848754718-be02141c6cc3?w=600&h=420&fit=crop&auto=format",
     ],
     badges: ["Expert Guide", "Convoy Safety System", "Small Group Policy"],
-    metaDescription:
-      "Wat Pho, Wat Arun, and Wat Traimit in a single focused morning with a licensed Bangkok cultural guide. Ancient Temple Circuit from 1,199 THB. Siam Journeys.",
-    description:
-      "Bangkok's three most architecturally and historically significant Buddhist temples — Wat Pho, Wat Arun, and Wat Traimit — are within three kilometres of each other, yet most visitors see them separately, without context, and without depth. The Ancient Temple Circuit connects all three in a single five-hour morning, paced to allow genuine engagement with each site rather than a photographic checklist. Your guide provides art-historical, religious, and social context that transforms the experience from sightseeing into understanding.",
+    metaDescription: "Wat Pho, Wat Arun, and Wat Traimit in a single focused morning with a licensed Bangkok cultural guide. Ancient Temple Circuit from 1,199 THB. Siam Journeys.",
+    description: "Bangkok's three most architecturally and historically significant Buddhist temples — Wat Pho, Wat Arun, and Wat Traimit — are within three kilometres of each other, yet most visitors see them separately, without context, and without depth. The Ancient Temple Circuit connects all three in a single five-hour morning, paced to allow genuine engagement with each site rather than a photographic checklist. Your guide provides art-historical, religious, and social context that transforms the experience from sightseeing into understanding.",
     highlights: [
       "Wat Pho — Thailand's oldest royal temple and the birthplace of traditional Thai massage",
       "Wat Arun — the Temple of Dawn, climbed at morning light",
@@ -393,8 +498,41 @@ export const TOURS: Tour[] = [
         "Reusable water bottle",
       ],
     },
-  },
-  {
+    pricing: {
+        priceAdult: 1199,
+        priceChild: 600,
+        priceSoloPrivate: 2400,
+        priceGroup: 1049,
+        groupMin: 10,
+        packages: [
+            {
+                key: "family",
+                label: "Family Package",
+                price: 2400,
+                adults: 2,
+                childrenMin: 1,
+                childrenMax: 2
+            },
+            {
+                key: "couple",
+                label: "Comfort Package",
+                price: 2180,
+                adults: 2,
+                childrenMin: 0,
+                childrenMax: 0
+            },
+            {
+                key: "adventure",
+                label: "Adventure Package",
+                price: 2850,
+                adults: 3,
+                childrenMin: 0,
+                childrenMax: 0
+            }
+        ]
+    }
+},
+{
     id: "local-neighborhood-discovery",
     category: "local",
     name: "Local Neighbourhood Discovery",
@@ -402,10 +540,6 @@ export const TOURS: Tour[] = [
     duration: "4 Hours",
     startTime: "9:00 AM",
     groupSize: "Max 8 guests",
-    priceSingle: 999,
-    priceFam: 3250,
-    priceGroup: 849,
-    groupMin: 6,
     rating: 4.9,
     reviews: 178,
     img: "https://images.unsplash.com/photo-1615619825440-f18cea64b00e?w=800&h=520&fit=crop&auto=format",
@@ -415,10 +549,8 @@ export const TOURS: Tour[] = [
       "https://images.unsplash.com/photo-1591233244187-ffd622c51fbd?w=600&h=420&fit=crop&auto=format",
     ],
     badges: ["Expert Guide", "Small Group Policy", "Fully Insured"],
-    metaDescription:
-      "Explore the real Bangkok — Phra Khanong, On Nut, and the canal communities — with a local guide on tuk-tuk and canal boat. From 999 THB. Siam Journeys.",
-    description:
-      "There is a Bangkok that travel writing almost never covers: the neighbourhood Bangkok of the city's two million working residents. This four-hour experience takes a small group by tuk-tuk convoy into Phra Khanong — a district of independent coffee shops, fresh markets, traditional herbalists, and canal communities — where the pace is entirely different from the tourist centre. Your guide was born here. The people you meet are her neighbours. The food you eat is what she ate for breakfast this morning.",
+    metaDescription: "Explore the real Bangkok — Phra Khanong, On Nut, and the canal communities — with a local guide on tuk-tuk and canal boat. From 999 THB. Siam Journeys.",
+    description: "There is a Bangkok that travel writing almost never covers: the neighbourhood Bangkok of the city's two million working residents. This four-hour experience takes a small group by tuk-tuk convoy into Phra Khanong — a district of independent coffee shops, fresh markets, traditional herbalists, and canal communities — where the pace is entirely different from the tourist centre. Your guide was born here. The people you meet are her neighbours. The food you eat is what she ate for breakfast this morning.",
     highlights: [
       "Phra Khanong local wet market with a neighbourhood guide",
       "Canal-boat ride through the klong community network",
@@ -452,7 +584,40 @@ export const TOURS: Tour[] = [
         "Camera — the canal communities are photogenic",
       ],
     },
-  },
+    pricing: {
+        priceAdult: 999,
+        priceChild: 500,
+        priceSoloPrivate: 2000,
+        priceGroup: 849,
+        groupMin: 6,
+        packages: [
+            {
+                key: "family",
+                label: "Family Package",
+                price: 2000,
+                adults: 2,
+                childrenMin: 1,
+                childrenMax: 2
+            },
+            {
+                key: "couple",
+                label: "Comfort Package",
+                price: 1820,
+                adults: 2,
+                childrenMin: 0,
+                childrenMax: 0
+            },
+            {
+                key: "adventure",
+                label: "Adventure Package",
+                price: 2400,
+                adults: 3,
+                childrenMin: 0,
+                childrenMax: 0
+            }
+        ]
+    }
+},
 ];
 
 export const CATEGORIES: { id: Category | "all"; label: string }[] = [
@@ -462,3 +627,5 @@ export const CATEGORIES: { id: Category | "all"; label: string }[] = [
   { id: "cultural", label: "Cultural" },
   { id: "local", label: "Local Explore" },
 ];
+
+

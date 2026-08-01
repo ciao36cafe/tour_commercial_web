@@ -137,9 +137,21 @@ interface Tour {
   startTime: string;
   groupSize: string;
   groupMin: number;
-  priceSingle: number;
-  priceGroup: number;
-  priceFam: number;
+  pricing: {
+    priceAdult: number;
+    priceChild: number;
+    priceSoloPrivate: number;
+    priceGroup: number;
+    groupMin: number;
+    packages: {
+      key: string;
+      label: string;
+      price: number;
+      adults: number;
+      childrenMin: number;
+      childrenMax: number;
+    }[];
+  };
   img: string;
   galleryImgs: string[];
   included: string[];
@@ -356,22 +368,33 @@ function TourCard({ tour, onViewDetails }: { tour: Tour; onViewDetails: (id: str
           <span className="flex items-center gap-1.5"><Users size={12} className="text-[#B8952A]" />{tour.groupSize}</span>
         </div>
 
-        {/* Pricing */}
+        {/* Pricing - Updated to use pricing object */}
         <div className="mb-5 pb-5 border-b border-border">
           <div className="flex items-end gap-3">
             <div>
               <p className="text-[10px] text-[#7A6E60] tracking-wide">From</p>
               <p className="text-[22px] text-[#2A2824]" style={{ fontFamily: SERIF }}>
-                ฿{tour.priceSingle.toLocaleString()}
+                ฿{tour.pricing?.priceAdult?.toLocaleString() || 0}
               </p>
-              <p className="text-[11px] text-[#7A6E60]">per person</p>
+              <p className="text-[11px] text-[#7A6E60]">per adult</p>
             </div>
-            {tour.priceGroup < tour.priceSingle && (
+            {tour.pricing?.priceGroup && tour.pricing.priceGroup < tour.pricing.priceAdult && (
               <div className="pb-0.5">
-                <p className="text-[11px] text-[#2D4A3E] font-medium">฿{tour.priceGroup.toLocaleString()} / groups {tour.groupMin}+</p>
+                <p className="text-[11px] text-[#2D4A3E] font-medium">
+                  ฿{tour.pricing.priceGroup.toLocaleString()} / groups {tour.pricing.groupMin}+
+                </p>
               </div>
             )}
           </div>
+          {tour.pricing?.packages && tour.pricing.packages.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {tour.pricing.packages.slice(0, 2).map((pkg) => (
+                <span key={pkg.key} className="text-[9px] tracking-[0.05em] px-2 py-0.5 bg-[#EDE5D0] text-[#5A5248] rounded">
+                  {pkg.label}: ฿{pkg.price.toLocaleString()}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Trust badges */}
@@ -453,24 +476,33 @@ function FeaturedTourCard({ tour, onViewDetails }: { tour: Tour; onViewDetails: 
           ))}
         </ul>
 
-        {/* Pricing block */}
+        {/* Pricing block - Updated to use pricing object */}
         <div className="p-4 bg-[#EDE5D0] mb-5">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div>
               <p className="text-[10px] text-[#7A6E60] tracking-wide">Standard Rate</p>
               <p className="text-[26px] text-[#2A2824]" style={{ fontFamily: SERIF }}>
-                ฿{tour.priceSingle.toLocaleString()} <span className="text-[14px] text-[#7A6E60]">/ person</span>
+                ฿{tour.pricing?.priceAdult?.toLocaleString() || 0} <span className="text-[14px] text-[#7A6E60]">/ adult</span>
               </p>
             </div>
-            {tour.priceGroup < tour.priceSingle && (
+            {tour.pricing?.priceGroup && tour.pricing.priceGroup < tour.pricing.priceAdult && (
               <div>
-                <p className="text-[10px] text-[#7A6E60] tracking-wide">Groups of {tour.groupMin}+</p>
+                <p className="text-[10px] text-[#7A6E60] tracking-wide">Groups of {tour.pricing.groupMin}+</p>
                 <p className="text-[22px] text-[#2D4A3E]" style={{ fontFamily: SERIF }}>
-                  ฿{tour.priceGroup.toLocaleString()} <span className="text-[13px] text-[#7A6E60]">/ person</span>
+                  ฿{tour.pricing.priceGroup.toLocaleString()} <span className="text-[13px] text-[#7A6E60]">/ person</span>
                 </p>
               </div>
             )}
           </div>
+          {tour.pricing?.packages && tour.pricing.packages.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {tour.pricing.packages.map((pkg) => (
+                <span key={pkg.key} className="text-[9px] tracking-[0.05em] px-2 py-1 bg-[#FAF7F2] text-[#5A5248] rounded border border-[#2D4A3E]/10">
+                  {pkg.label}: ฿{pkg.price.toLocaleString()}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Trust badges */}
@@ -533,10 +565,40 @@ function AvailableTours() {
       duration: t.duration || '3 hours',
       startTime: t.startTime || '09:00',
       groupSize: t.groupSize || '2-12 people',
-      groupMin: t.groupMin || 4,
-      priceSingle: t.priceSingle || 0,
-      priceGroup: t.priceGroup || 0,
-      priceFam: t.priceFam || 0,
+      groupMin: t.pricing?.groupMin || t.groupMin || 4,
+      pricing: t.pricing || {
+        priceAdult: t.priceSingle || 0,
+        priceChild: Math.round((t.priceSingle || 0) / 2),
+        priceSoloPrivate: (t.priceSingle || 0) * 2,
+        priceGroup: t.priceGroup || 0,
+        groupMin: t.groupMin || 4,
+        packages: [
+          {
+            key: "family",
+            label: "Family Package",
+            price: t.priceFam || 0,
+            adults: 2,
+            childrenMin: 1,
+            childrenMax: 2
+          },
+          {
+            key: "couple",
+            label: "Comfort Package",
+            price: Math.round((t.priceSingle || 0) * 1.8),
+            adults: 2,
+            childrenMin: 0,
+            childrenMax: 0
+          },
+          {
+            key: "adventure",
+            label: "Adventure Package",
+            price: Math.round((t.priceSingle || 0) * 2.4),
+            adults: 3,
+            childrenMin: 0,
+            childrenMax: 0
+          }
+        ]
+      },
       img: t.img || t.heroImg || '',
       galleryImgs: t.galleryImgs || [],
       included: t.included || [],
@@ -623,9 +685,39 @@ function AvailableTours() {
         startTime: t.start_time || '09:00',
         groupSize: t.group_size || `${t.group_min || 2}+ people`,
         groupMin: t.group_min || 4,
-        priceSingle: t.price_single || 0,
-        priceGroup: t.price_group || 0,
-        priceFam: t.price_fam || 0,
+        pricing: t.pricing || {
+          priceAdult: t.price_single || 0,
+          priceChild: Math.round((t.price_single || 0) / 2),
+          priceSoloPrivate: (t.price_single || 0) * 2,
+          priceGroup: t.price_group || 0,
+          groupMin: t.group_min || 4,
+          packages: [
+            {
+              key: "family",
+              label: "Family Package",
+              price: t.price_fam || 0,
+              adults: 2,
+              childrenMin: 1,
+              childrenMax: 2
+            },
+            {
+              key: "couple",
+              label: "Comfort Package",
+              price: Math.round((t.price_single || 0) * 1.8),
+              adults: 2,
+              childrenMin: 0,
+              childrenMax: 0
+            },
+            {
+              key: "adventure",
+              label: "Adventure Package",
+              price: Math.round((t.price_single || 0) * 2.4),
+              adults: 3,
+              childrenMin: 0,
+              childrenMax: 0
+            }
+          ]
+        },
         img: t.hero_img || '',
         galleryImgs: t.gallery_imgs || [],
         included: t.included || [],
@@ -737,11 +829,6 @@ function AvailableTours() {
             <p className="text-[14px] text-[#7A6E60] max-w-xs leading-relaxed md:text-right">
               Every tour operates with our licensed convoy system, certified guides, and full guest insurance.
             </p>
-            {usingFallback && (
-              <p className="text-[11px] text-[#B8952A] mt-2 italic">
-                ⚡ Using sample tour data (offline mode)
-              </p>
-            )}
           </div>
         </div>
 
