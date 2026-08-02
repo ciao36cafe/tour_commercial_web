@@ -1176,7 +1176,7 @@ function BookingCta() {
           <button className="w-full md:w-auto px-12 py-4 bg-[#B8952A] text-[#FAF7F2] text-[12px] tracking-[0.14em] uppercase hover:bg-[#A47F22] transition-colors duration-300">Send Your Enquiry</button>
         </div>
         <div className="mt-10 flex flex-wrap justify-center gap-8">
-          <a href="mailto:hello@siamjourneys.com" className="flex items-center gap-2 text-[#FAF7F2]/55 text-[13px] hover:text-[#FAF7F2] transition-colors"><Mail size={13} />hello@siamjourneys.com</a>
+          <a href="mailto:siamjourney.th@gmail.com" className="flex items-center gap-2 text-[#FAF7F2]/55 text-[13px] hover:text-[#FAF7F2] transition-colors"><Mail size={13} />siamjourney.th@gmail.com</a>
           <a href="tel:+6692 475 9669" className="flex items-center gap-2 text-[#FAF7F2]/55 text-[13px] hover:text-[#FAF7F2] transition-colors"><Phone size={13} />+6692 475 9669</a>
           <span className="flex items-center gap-2 text-[#FAF7F2]/55 text-[13px]"><MapPin size={13} />Phra Nakhon, Bangkok 10200</span>
         </div>

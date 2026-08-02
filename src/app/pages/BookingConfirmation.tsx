@@ -25,6 +25,7 @@ import { generateOrderQRCode } from "../services/qrCodeService";
 const SERIF = "'Playfair Display', Georgia, serif";
 
 // ============ TYPES ============
+// ============ TYPES ============
 interface BookingData {
   // Basic booking info
   tourId: string;
@@ -48,7 +49,13 @@ interface BookingData {
   tourHighlights?: string[];
   tourIncluded?: string[];
   tourNotIncluded?: string[];
-  tourItinerary?: Array<{ time: string; title: string; description: string }>;
+  // ✅ Add stopMap to the itinerary type
+  tourItinerary?: Array<{ 
+    time: string; 
+    title: string; 
+    description: string;
+    stopMap?: string; // ← Add this
+  }>;
   tourEssentials?: {
     dressCode: string;
     fitness: string;
@@ -80,7 +87,6 @@ interface FormData {
   agreeTerms: boolean;
   agreeCommunications: boolean;
 }
-
 // ============ COMPONENT ============
 export function BookingConfirmation() {
   const navigate = useNavigate();
@@ -203,6 +209,7 @@ export function BookingConfirmation() {
           // ✅ BUILD EMAIL DATA - ALL DATA FROM bookingData AND formData, NO HARDCODED VALUES
           // In the sendEmails useEffect, update the emailData to use ALL tour data
 
+          // In the sendEmails useEffect, update emailData to include ALL data
           const emailData: BookingEmailData = {
             // ===== FROM formData =====
             firstName: formData.firstName,
@@ -222,7 +229,7 @@ export function BookingConfirmation() {
             tourName: bookingData.tourName,
             tourDate: formatDateForEmail(bookingData.date),
             packageType: bookingData.isFamilyTrip ? 'Family Package' : 
-                        bookingData.isGroup ? 'Group Package' : 'Standard Tour',
+                          bookingData.isGroup ? 'Group Package' : 'Standard Tour',
             quantity: guestCount,
             voucherNumber: `VOUCHER-${orderId}`,
             totalPrice: `฿${bookingData.totalPrice.toLocaleString()}`,
@@ -240,7 +247,7 @@ export function BookingConfirmation() {
             
             // ===== FROM formData - Pickup =====
             pickupLocation: formData.hotelName || 'Siam Journeys Meeting Point',
-            pickupTime: '08:30 AM',
+            pickupTime: bookingData.tourStartTime || '08:30 AM',
             
             // ===== FROM formData - Emergency =====
             emergencyName: formData.emergencyName || '',
@@ -257,19 +264,32 @@ export function BookingConfirmation() {
             qrCodeDataUrl: qrCodeDataUrl,
             qrCodeExternalUrl: qrCodeExternalUrl,
             
-            // ✅ ===== FROM bookingData - FULL TOUR DATA (from DB or fallback) =====
+            // ✅ ===== FROM bookingData - FULL TOUR DATA =====
             departureTime: bookingData.tourStartTime || '08:00 AM',
             returnTime: '04:00 PM',
-            itineraryStops: bookingData.tourItinerary?.map(item => ({
+            tourDuration: bookingData.tourDuration || '3 hours',
+            tourDescription: bookingData.tourDescription || '',
+            tourHighlights: bookingData.tourHighlights || [],
+            
+            // Itinerary stops with full details
+            itineraryStops: (bookingData.tourItinerary || []).map(item => ({
               stop_name: item.title || item.time || 'Tour Stop',
               stop_duration: item.time || '',
-              stop_type: ''
-            })) || [],
+              stop_type: '',
+              stop_description: item.description || '',
+              stop_map: item.stopMap || '',
+            })),
             itineraryDisclaimer: 'Times are approximate and may vary based on traffic and weather conditions.',
             
             // ✅ ===== FROM bookingData - INCLUDED/EXCLUDED =====
             includedItems: bookingData.tourIncluded || [],
             excludedItems: bookingData.tourNotIncluded || [],
+            
+            // ✅ ===== FROM bookingData - ESSENTIALS =====
+            dressCode: bookingData.tourEssentials?.dressCode || 'Smart casual',
+            fitnessLevel: bookingData.tourEssentials?.fitness || 'Moderate',
+            agePolicy: bookingData.tourEssentials?.agePolicy || 'All ages welcome',
+            whatToBring: bookingData.tourEssentials?.prep || [],
             
             // ===== CANCELLATION =====
             cancellationPolicyText: 'Free cancellation up to 14 days before the tour date. Cancellations within 14 days will receive a credit voucher valid for 12 months. No-shows will be charged in full.',
@@ -278,9 +298,9 @@ export function BookingConfirmation() {
             // ===== CONTACT =====
             operatorName: 'Siam Journeys Bangkok',
             operatorPhone: '+6692 475 9669',
-            operatorEmail: 'hello@siamjourneys.com',
-            operatorWebsite: 'https://siamjourneys.com',
-            supportNote: 'We\'re here to help! Contact us anytime at hello@siamjourneys.com or call +6692 475 9669',
+            operatorEmail: 'siamjourney.th@gmail.com',
+            operatorWebsite: 'https://siamjourney-tuktuk-services.netlify.app/',
+            supportNote: 'We\'re here to help! Contact us anytime at siamjourney.th@gmail.com or call +6692 475 9669',
             
             // ===== COMPANY =====
             companyLogoUrl: 'https://siamjourneys.com/logo.png',
@@ -312,7 +332,7 @@ export function BookingConfirmation() {
         } catch (error) {
           console.error('❌ Failed to send emails:', error);
           setEmailStatus('failed');
-          setEmailError('Failed to send confirmation emails. Please contact us at hello@siamjourneys.com');
+          setEmailError('Failed to send confirmation emails. Please contact us at siamjourney.th@gmail.com');
           setEmailsSent(true);
         }
       }
@@ -642,7 +662,7 @@ export function BookingConfirmation() {
               <Mail size={18} className="text-[#B8952A]" />
               <div>
                 <p className="text-[11px] text-[#7A6E60]">Email us</p>
-                <p className="text-[14px] font-medium text-[#2A2824]">hello@siamjourneys.com</p>
+                <p className="text-[14px] font-medium text-[#2A2824]">siamjourney.th@gmail.com</p>
               </div>
             </div>
           </div>

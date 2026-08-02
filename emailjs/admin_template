@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Booking Alert - {{order_id}}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+      color: #1a1a2e;
+      font-size: 13px;
+      line-height: 1.6;
+      background: #f5f6f8;
+      padding: 20px;
+    }
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+    }
+    .header {
+      background: #1b2a4a;
+      padding: 20px 25px;
+      text-align: center;
+    }
+    .header h2 { color: #ffffff; font-size: 20px; margin: 0; }
+    .header p { color: #cdd6e8; margin: 3px 0 0; font-size: 13px; }
+    .header .order-id { color: #B8952A; font-weight: 700; font-size: 15px; }
+    .content { padding: 20px 25px; }
+    
+    .alert {
+      background: #e4f7f0;
+      padding: 12px 16px;
+      border-left: 4px solid #2ea88f;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+    
+    .section { margin-bottom: 18px; }
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1b2a4a;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 6px;
+      margin-bottom: 10px;
+    }
+    
+    .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid #f5f5f5;
+      font-size: 13px;
+    }
+    .row .label { color: #888; }
+    .row .value { font-weight: 600; color: #1a1a2e; text-align: right; }
+    
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px 16px;
+    }
+    
+    .emergency-box {
+      background: #f8f4ee;
+      padding: 10px 14px;
+      border-radius: 4px;
+      border-left: 3px solid #c0392b;
+    }
+    
+    .quick-actions {
+      background: #f8f9fa;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+    .quick-actions p { margin: 2px 0; font-size: 13px; }
+    
+    .action-box {
+      background: #fef3c7;
+      padding: 12px 16px;
+      border-left: 4px solid #f59e0b;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    
+    .divider { height: 1px; background: #eee; margin: 15px 0; }
+    
+    .data-box {
+      background: #1a1a2e;
+      color: #e4e4e4;
+      padding: 12px 14px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      overflow: auto;
+      max-height: 500px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin-top: 6px;
+      border: 1px solid #333;
+      line-height: 1.4;
+    }
+    
+    .footer {
+      text-align: center;
+      padding: 15px 25px;
+      color: #888;
+      font-size: 12px;
+      border-top: 1px solid #eee;
+      background: #fafbfc;
+    }
+    
+    .status-pending {
+      display: inline-block;
+      padding: 2px 12px;
+      border-radius: 50px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    @media only screen and (max-width: 480px) {
+      body { padding: 10px; }
+      .content { padding: 14px 16px; }
+      .header { padding: 14px 16px; }
+      .header h2 { font-size: 17px; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .row { flex-direction: column; align-items: flex-start; padding: 5px 0; }
+      .row .value { text-align: left; margin-top: 1px; }
+      .data-box { font-size: 10px; max-height: 300px; padding: 10px 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <!-- HEADER -->
+    <div class="header">
+      <h2>🔔 New Booking Alert</h2>
+      <p>Siam Journeys Booking System</p>
+      <p style="margin-top: 4px; color: #B8952A; font-weight: 700;">
+        Order #{{order_id}}
+      </p>
+    </div>
+    
+    <div class="content">
+      
+      <!-- Status -->
+      <div class="alert">
+        <strong>🆕 New Booking Received!</strong><br>
+        Order #<strong>{{order_id}}</strong> · 
+        <span class="status-pending">⏳ PENDING</span>
+      </div>
+      
+      <!-- ===== CUSTOMER INFO ===== -->
+      <div class="section">
+        <div class="section-title">👤 Customer</div>
+        <div class="grid-2">
+          <div class="row"><span class="label">Name</span><span class="value">{{customer_name}}</span></div>
+          <div class="row"><span class="label">Email</span><span class="value">{{customer_email}}</span></div>
+          <div class="row"><span class="label">Phone</span><span class="value">{{customer_phone}}</span></div>
+          <div class="row"><span class="label">Country</span><span class="value">{{customer_country}}</span></div>
+        </div>
+      </div>
+      
+      <!-- ===== BOOKING ===== -->
+      <div class="section">
+        <div class="section-title">📋 Booking</div>
+        <div class="grid-2">
+          <div class="row"><span class="label">Tour</span><span class="value">{{tour_name}}</span></div>
+          <div class="row"><span class="label">Date</span><span class="value">{{tour_date}}</span></div>
+          <div class="row"><span class="label">Package</span><span class="value">{{package_type}}</span></div>
+          <div class="row"><span class="label">Guests</span><span class="value">{{quantity}}</span></div>
+          <div class="row"><span class="label">Voucher</span><span class="value">{{voucher_number}}</span></div>
+          <div class="row"><span class="label">Total</span><span class="value" style="font-size:18px; color:#1b2a4a;">{{total_price}}</span></div>
+        </div>
+      </div>
+      
+      <!-- ===== ACCOMMODATION ===== -->
+      <div class="section">
+        <div class="section-title">🏨 Accommodation</div>
+        <div class="grid-2">
+          <div class="row"><span class="label">Hotel</span><span class="value">{{hotel_name}}</span></div>
+          <div class="row"><span class="label">Address</span><span class="value">{{hotel_address}}</span></div>
+          <div class="row"><span class="label">Room</span><span class="value">{{hotel_room}}</span></div>
+        </div>
+      </div>
+      
+      <!-- ===== FLIGHT ===== -->
+      <div class="section">
+        <div class="section-title">✈️ Flight</div>
+        <div class="grid-2">
+          <div class="row"><span class="label">Flight</span><span class="value">{{flight_number}}</span></div>
+          <div class="row"><span class="label">Arrival</span><span class="value">{{arrival_time}}</span></div>
+        </div>
+      </div>
+      
+      <!-- ===== PICKUP ===== -->
+      <div class="section">
+        <div class="section-title">📍 Pickup</div>
+        <div class="grid-2">
+          <div class="row"><span class="label">Location</span><span class="value">{{pickup_location}}</span></div>
+          <div class="row"><span class="label">Time</span><span class="value">{{pickup_time}}</span></div>
+        </div>
+      </div>
+      
+      <!-- ===== EMERGENCY ===== -->
+      <div class="section">
+        <div class="section-title">🚨 Emergency</div>
+        <div class="emergency-box">
+          <div class="grid-2">
+            <div class="row"><span class="label">Name</span><span class="value">{{emergency_name}}</span></div>
+            <div class="row"><span class="label">Phone</span><span class="value">{{emergency_phone}}</span></div>
+            <div class="row"><span class="label">Email</span><span class="value">{{emergency_email}}</span></div>
+            <div class="row"><span class="label">Relation</span><span class="value">{{emergency_relation}}</span></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ===== SPECIAL ===== -->
+      <div class="section">
+        <div class="section-title">🍽️ Special</div>
+        <div class="grid-2">
+          <div class="row"><span class="label">Dietary</span><span class="value">{{dietary_needs}}</span></div>
+          <div class="row"><span class="label">Accessibility</span><span class="value">{{accessibility_needs}}</span></div>
+          <div class="row" style="grid-column:1/-1;"><span class="label">Requests</span><span class="value">{{special_requests}}</span></div>
+        </div>
+      </div>
+      
+      <!-- ===== ITINERARY ===== -->
+      <div class="section">
+        <div class="section-title">📋 Itinerary</div>
+        <div style="background:#f8f9fa; padding:10px 14px; border-radius:4px; font-size:13px; line-height:1.8;">
+          <div><strong>Departure:</strong> {{departure_time}}</div>
+          <div><strong>Return:</strong> {{return_time}}</div>
+          <div style="margin-top:4px;"><strong>Stops:</strong></div>
+          <div style="white-space:pre-wrap; padding-left:12px;">{{itinerary_text}}</div>
+          <div style="font-size:11px; color:#888; margin-top:4px;">{{itinerary_disclaimer}}</div>
+        </div>
+      </div>
+      
+      <!-- ===== INCLUDED ===== -->
+      <div class="section">
+        <div class="section-title">✅ Included</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div>
+            <p style="font-size:12px; font-weight:700; color:#1a8a6b;">Included</p>
+            <div style="font-size:12.5px; line-height:1.8; color:#555; white-space:pre-wrap;">{{included_text}}</div>
+          </div>
+          <div>
+            <p style="font-size:12px; font-weight:700; color:#c0392b;">Not Included</p>
+            <div style="font-size:12.5px; line-height:1.8; color:#555; white-space:pre-wrap;">{{excluded_text}}</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- ===== ACTION ===== -->
+      <div class="action-box">
+        <strong>⚠️ Action Required:</strong> Please verify payment and confirm this booking.
+      </div>
+      
+      <!-- ===== QUICK ACTIONS ===== -->
+      <div class="quick-actions">
+        <p><strong>Quick Actions:</strong></p>
+        <p>📧 Reply: <a href="mailto:{{customer_email}}">{{customer_email}}</a></p>
+        <p>📞 Call: {{customer_phone}}</p>
+        <p>📋 Order: <strong>{{order_id}}</strong></p>
+        <p>⏳ Status: <strong>Pending Payment Verification</strong></p>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <!-- ===== FULL ORDER DATA (JSON - Sanitized) ===== -->
+      <div class="section">
+        <div class="section-title">📦 Full Order Data (JSON)</div>
+        <div class="data-box">{{full_order_data_safe}}</div>
+      </div>
+      
+      <!-- ===== ORDER SUMMARY ===== -->
+      <div class="section">
+        <div class="section-title">📋 Order Summary</div>
+        <div class="data-box" style="background:#f8f9fa; color:#333; border-color:#ddd;">{{order_summary_safe}}</div>
+      </div>
+      
+      <!-- ===== CONTACT ===== -->
+      <div class="section">
+        <div class="section-title">📞 Contact</div>
+        <div class="grid-2">
+          <div class="row"><span class="label">Operator</span><span class="value">{{operator_name}}</span></div>
+          <div class="row"><span class="label">Phone</span><span class="value">{{operator_phone}}</span></div>
+          <div class="row"><span class="label">Email</span><span class="value">{{operator_email}}</span></div>
+          <div class="row"><span class="label">Website</span><span class="value">{{operator_website}}</span></div>
+        </div>
+      </div>
+      
+    </div>
+    
+    <div class="footer">
+      <p>Automated notification from Siam Journeys Booking System</p>
+      <p style="font-size:11px; color:#aaa;">Order #{{order_id}} · ⏳ Pending Payment Verification</p>
+      <p style="font-size:10px; color:#ccc;">Sent: {{sent_time}}</p>
+    </div>
+    
+  </div>
+</body>
+</html>

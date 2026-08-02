@@ -1,0 +1,19 @@
+Subject
+Tour Booking Confirmation #{{order_id}}! 
+
+To Email
+{{to_email}}
+From Name
+Siam Journey Tuktuk Rides Service
+From Email
+
+Use Default Email Address
+Reply To
+tuktuktoursystem@gmail.com
+Bcc
+
+SettingName
+Admin Booking Confirmation
+Template ID
+Booking-confirm-admin
+

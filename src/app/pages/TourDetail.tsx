@@ -745,17 +745,28 @@ export function TourDetail() {
     if (!selectedDate) { alert("Please select a date."); return; }
     if (adults + childrenCount === 0) { alert("Please add at least one guest."); return; }
 
+    // ✅ Get the price result for accurate pricing
+    const priceResult = getBestPrice(tour.pricing, adults, childrenCount, wantPrivate);
+
     const bookingData = {
+      // Basic booking info
       tourId: tour.id,
       tourName: tour.name,
       date: selectedDate,
-      adults,
-      children: childrenCount,
       guests: adults + childrenCount,
-      isPrivate: !!priceResult.isPrivate,
-      appliedPackage: priceResult.appliedLabel || null,
       totalPrice: priceResult.total,
-
+      pricePerPerson: tour.pricing.priceAdult,
+      isFamilyTrip: priceResult.appliedLabel === "Family Package",
+      numberOfFamilies: priceResult.appliedLabel === "Family Package" ? Math.ceil(adults / 2) : undefined,
+      adultsPerFamily: 2,
+      childrenPerFamily: priceResult.appliedLabel === "Family Package" ? childrenCount : undefined,
+      totalAdults: adults,
+      totalChildren: childrenCount,
+      priceFam: tour.pricing.packages.find(p => p.key === "family")?.price,
+      isGroup: adults >= tour.pricing.groupMin,
+      groupMin: tour.pricing.groupMin,
+      
+      // ✅ FULL TOUR DATA - ALL fields from the tour
       tourDescription: tour.description,
       tourHighlights: tour.highlights,
       tourIncluded: tour.included,
@@ -764,6 +775,14 @@ export function TourDetail() {
       tourEssentials: tour.essentials,
       tourDuration: tour.duration,
       tourStartTime: tour.startTime,
+      tourGroupSize: tour.groupSize,
+      tourCategory: tour.category,
+      tourBadges: tour.badges,
+      tourRating: tour.rating,
+      tourReviews: tour.reviews,
+      tourHeroImg: tour.heroImg,
+      tourGalleryImgs: tour.galleryImgs,
+      tourMetaDescription: tour.metaDescription,
     };
 
     setShowMobileBooking(false);

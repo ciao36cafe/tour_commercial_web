@@ -13,20 +13,7 @@ const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@siamjourneys.com'
 
 // ============ INTERFACE ============
 export interface BookingEmailData {
-  // Customer info
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  country: string;
-  
-  // Customer details (for email templates)
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  customerCountry: string;
-  
-  // Booking details
+  // Basic info
   orderId: string;
   bookingReferenceId: string;
   tourName: string;
@@ -37,6 +24,17 @@ export interface BookingEmailData {
   totalPrice: string;
   bookingStatus: string;
   paymentStatus: string;
+  
+  // Customer info
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  country: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  customerCountry: string;
   
   // Accommodation
   hotelName: string;
@@ -50,6 +48,7 @@ export interface BookingEmailData {
   // Pickup
   pickupLocation: string;
   pickupTime: string;
+  pickupNote?: string; // Optional note about pickup confirmation
   
   // Emergency
   emergencyName: string;
@@ -66,26 +65,28 @@ export interface BookingEmailData {
   qrCodeDataUrl: string;
   qrCodeExternalUrl: string;
   
-  // Itinerary
+  // Tour details
   departureTime: string;
   returnTime: string;
-  itineraryStops: Array<{ stop_name: string; stop_duration: string; stop_type: string }>;
+  tourDuration: string;
+  tourDescription: string;
+  tourHighlights: string[];
+  itineraryStops: Array<{
+    stop_name: string;
+    stop_duration: string;
+    stop_type: string;
+    stop_description?: string;
+    stop_map?: string;
+  }>;
   itineraryDisclaimer: string;
-  
-  // Included/Excluded
   includedItems: string[];
   excludedItems: string[];
   
-  // Pickup points (legacy support)
-  pickupPoints?: Array<{ time: string; location_name: string; address: string }>;
-  pickupLocationName?: string;
-  confirmationLocationName?: string;
-  confirmationAddress?: string;
-  confirmationPickupTime?: string;
-  returnLocationName?: string;
-  returnAddress?: string;
-  eligibilityRules?: string[];
-  additionalInfo?: string[];
+  // Essentials
+  dressCode: string;
+  fitnessLevel: string;
+  agePolicy: string;
+  whatToBring: string[];
   
   // Cancellation
   cancellationPolicyText: string;
@@ -101,6 +102,19 @@ export interface BookingEmailData {
   // Company
   companyLogoUrl: string;
   companyName: string;
+  
+  // Additional fields for pickup points
+  pickupPoints?: Array<{
+    time: string;
+    location_name: string;
+    address: string;
+  }>;
+  pickupLocationName?: string;
+  confirmationPickupTime?: string;
+  returnLocationName?: string;
+  returnAddress?: string;
+  eligibilityRules?: string[];
+  additionalInfo?: string[];
 }
 
 // ============ HELPER: FORMAT ORDER DATA ============
@@ -138,6 +152,7 @@ const formatOrderDataForEmail = (data: BookingEmailData): string => {
     pickup: {
       location: data.pickupLocation,
       time: data.pickupTime,
+      note: data.pickupNote || 'Exact time confirmed 24h before tour',
     },
     
     emergencyContact: {
@@ -162,6 +177,12 @@ const formatOrderDataForEmail = (data: BookingEmailData): string => {
     
     included: data.includedItems,
     excluded: data.excludedItems,
+    essentials: {
+      dressCode: data.dressCode,
+      fitnessLevel: data.fitnessLevel,
+      agePolicy: data.agePolicy,
+      whatToBring: data.whatToBring,
+    },
     
     cancellation: {
       policy: data.cancellationPolicyText,
@@ -185,6 +206,15 @@ const formatOrderDataForEmail = (data: BookingEmailData): string => {
 
 // ============ HELPER: FORMAT ORDER SUMMARY ============
 const formatOrderSummary = (data: BookingEmailData): string => {
+  const stopsList = data.itineraryStops?.map((stop, i) => 
+    `  ${i+1}. ${stop.stop_name} (${stop.stop_duration})${stop.stop_description ? `\n     ${stop.stop_description}` : ''}`
+  ).join('\n') || '  No stops listed';
+
+  const includedList = data.includedItems?.map(item => `  • ${item}`).join('\n') || '  None listed';
+  const excludedList = data.excludedItems?.map(item => `  • ${item}`).join('\n') || '  None listed';
+  const whatToBringList = data.whatToBring?.map(item => `  • ${item}`).join('\n') || '  None listed';
+  const highlightsList = data.tourHighlights?.map(item => `  • ${item}`).join('\n') || '  None listed';
+
   return `
 ┌─────────────────────────────────────────────────────┐
 │  ORDER SUMMARY - ${data.orderId}
@@ -200,6 +230,7 @@ Guests:        ${data.quantity}
 Voucher:       ${data.voucherNumber}
 Total:         ${data.totalPrice}
 Status:        ${data.bookingStatus}
+Payment:       ${data.paymentStatus}
 
 👤 CUSTOMER
 ──────────────────────────────────────────────────────
@@ -221,8 +252,9 @@ Arrival:       ${data.arrivalTime || 'Not provided'}
 
 📍 PICKUP
 ──────────────────────────────────────────────────────
-Location:      ${data.pickupLocation || 'Not provided'}
-Time:          ${data.pickupTime || 'Not provided'}
+Location:      ${data.pickupLocation || 'Siam Journeys Meeting Point'}
+Time:          ${data.pickupTime || '08:00 AM'}
+Note:          ${data.pickupNote || 'Exact time confirmed 24h before tour'}
 
 🚨 EMERGENCY CONTACT
 ──────────────────────────────────────────────────────
@@ -237,20 +269,34 @@ Dietary:       ${data.dietaryNeeds || 'None'}
 Accessibility: ${data.accessibilityNeeds || 'None'}
 Requests:      ${data.specialRequests || 'None'}
 
+🌟 TOUR HIGHLIGHTS
+──────────────────────────────────────────────────────
+${highlightsList}
+
 📋 ITINERARY
 ──────────────────────────────────────────────────────
 Departure:     ${data.departureTime || '08:00 AM'}
 Return:        ${data.returnTime || '04:00 PM'}
+Duration:      ${data.tourDuration || 'Not specified'}
 Stops:
-${data.itineraryStops?.map((stop, i) => `  ${i+1}. ${stop.stop_name} (${stop.stop_duration})`).join('\n') || '  No stops listed'}
+${stopsList}
+${data.itineraryDisclaimer ? `\nNote: ${data.itineraryDisclaimer}` : ''}
 
 ✅ INCLUDED
 ──────────────────────────────────────────────────────
-${data.includedItems?.map(item => `  • ${item}`).join('\n') || '  None listed'}
+${includedList}
 
 ❌ NOT INCLUDED
 ──────────────────────────────────────────────────────
-${data.excludedItems?.map(item => `  • ${item}`).join('\n') || '  None listed'}
+${excludedList}
+
+👕 ESSENTIALS
+──────────────────────────────────────────────────────
+Dress Code:    ${data.dressCode || 'Not specified'}
+Fitness:       ${data.fitnessLevel || 'Not specified'}
+Age Policy:    ${data.agePolicy || 'Not specified'}
+What to Bring:
+${whatToBringList}
 
 📄 CANCELLATION POLICY
 ──────────────────────────────────────────────────────
@@ -261,8 +307,9 @@ Deadline: ${data.cancellationDeadline || '14 days before the tour'}
 ──────────────────────────────────────────────────────
 Operator:      ${data.operatorName || 'Siam Journeys Bangkok'}
 Phone:         ${data.operatorPhone || '+6692 475 9669'}
-Email:         ${data.operatorEmail || 'hello@siamjourneys.com'}
-Website:       ${data.operatorWebsite || 'https://siamjourneys.com'}
+Email:         ${data.operatorEmail || 'siamjourney.th@gmail.com'}
+Website:       ${data.operatorWebsite || 'https://siamjourney-tuktuk-services.netlify.app/'}
+${data.supportNote ? `\n💬 Support: ${data.supportNote}` : ''}
 
 ${new Date().toISOString()}
 `;
@@ -299,7 +346,7 @@ export async function sendCustomerConfirmation(data: BookingEmailData) {
       to_email: data.email,
       to_name: `${data.firstName} ${data.lastName}`,
       from_name: 'Siam Journeys Bangkok',
-      reply_to: 'hello@siamjourneys.com',
+      reply_to: 'siamjourney.th@gmail.com',
       
       // ===== COMPANY INFO =====
       company_logo_url: data.companyLogoUrl || 'https://siamjourneys.com/logo.png',
@@ -332,8 +379,9 @@ export async function sendCustomerConfirmation(data: BookingEmailData) {
       arrival_time: data.arrivalTime || 'Not provided',
       
       // ===== PICKUP =====
-      pickup_location: data.pickupLocation || data.pickupLocationName || 'Siam Journeys Meeting Point',
-      pickup_time: data.pickupTime || data.confirmationPickupTime || '08:30 AM',
+      pickup_location: data.pickupLocation || 'Siam Journeys Meeting Point',
+      pickup_time: data.pickupTime || '08:00 AM',
+      pickup_note: data.pickupNote || 'Exact time will be confirmed 24 hours before your tour',
       
       // ===== EMERGENCY CONTACT =====
       emergency_name: data.emergencyName || 'Not provided',
@@ -350,8 +398,13 @@ export async function sendCustomerConfirmation(data: BookingEmailData) {
       qr_code_url: qrCodeDataUrl,
       qr_code_external_url: qrCodeExternalUrl,
       
+      // ===== TOUR DETAILS =====
+      tour_description: data.tourDescription || '',
+      tour_highlights: data.tourHighlights || [],
+      tour_duration: data.tourDuration || 'Not specified',
+      
       // ===== ITINERARY =====
-      departure_time: data.departureTime || '08:00 AM',
+      departure_time: data.departureTime || data.pickupTime || '08:00 AM',
       return_time: data.returnTime || '04:00 PM',
       itinerary_stops: data.itineraryStops || [],
       itinerary_disclaimer: data.itineraryDisclaimer || 'Times are approximate and may vary based on traffic and weather conditions.',
@@ -360,11 +413,17 @@ export async function sendCustomerConfirmation(data: BookingEmailData) {
       included_items: data.includedItems || [],
       excluded_items: data.excludedItems || [],
       
+      // ===== ESSENTIALS =====
+      dress_code: data.dressCode || 'Smart casual. Shoulders and knees must be covered for temple visits.',
+      fitness_level: data.fitnessLevel || 'Moderate. Some walking and navigating steps.',
+      age_policy: data.agePolicy || 'All ages welcome. Children under 12 must be accompanied by an adult.',
+      what_to_bring: data.whatToBring || ['Comfortable shoes', 'Sunscreen', 'Camera'],
+      
       // ===== PICKUP POINTS =====
       pickup_points: data.pickupPoints || [
         { 
           time: data.pickupTime || '08:00 AM', 
-          location_name: data.pickupLocation || data.pickupLocationName || 'Meeting Point', 
+          location_name: data.pickupLocation || 'Siam Journeys Meeting Point', 
           address: data.hotelAddress || 'Phra Nakhon, Bangkok 10200' 
         }
       ],
@@ -391,9 +450,9 @@ export async function sendCustomerConfirmation(data: BookingEmailData) {
       // ===== CONTACT =====
       operator_name: data.operatorName || 'Siam Journeys Bangkok',
       operator_phone: data.operatorPhone || '+6692 475 9669',
-      operator_email: data.operatorEmail || 'hello@siamjourneys.com',
-      operator_website: data.operatorWebsite || 'https://siamjourneys.com',
-      support_note: data.supportNote || 'We\'re here to help! Contact us anytime at hello@siamjourneys.com or call +6692 475 9669',
+      operator_email: data.operatorEmail || 'siamjourney.th@gmail.com',
+      operator_website: data.operatorWebsite || 'https://siamjourney-tuktuk-services.netlify.app/',
+      support_note: data.supportNote || 'We\'re here to help! Contact us anytime at siamjourney.th@gmail.com or call +6692 475 9669',
       
       // ===== ORDER ID =====
       order_id: data.orderId,
@@ -447,6 +506,7 @@ export async function sendAdminNotification(data: BookingEmailData, dbConnected:
       // ===== ORDER INFO =====
       order_id: data.orderId,
       booking_status: data.bookingStatus || 'Confirmed',
+      payment_status: data.paymentStatus || 'Paid',
       
       // ===== CUSTOMER INFO =====
       customer_name: data.customerName || `${data.firstName} ${data.lastName}`,
@@ -472,8 +532,9 @@ export async function sendAdminNotification(data: BookingEmailData, dbConnected:
       arrival_time: data.arrivalTime || 'Not provided',
       
       // ===== PICKUP =====
-      pickup_location: data.pickupLocation || data.pickupLocationName || 'Siam Journeys Meeting Point',
-      pickup_time: data.pickupTime || data.confirmationPickupTime || '08:30 AM',
+      pickup_location: data.pickupLocation || 'Siam Journeys Meeting Point',
+      pickup_time: data.pickupTime || '08:00 AM',
+      pickup_note: data.pickupNote || 'Exact time confirmed 24h before tour',
       
       // ===== EMERGENCY CONTACT =====
       emergency_name: data.emergencyName || 'Not provided',
@@ -487,14 +548,25 @@ export async function sendAdminNotification(data: BookingEmailData, dbConnected:
       special_requests: data.specialRequests || 'None',
       
       // ===== ITINERARY =====
-      departure_time: data.departureTime || '08:00 AM',
+      departure_time: data.departureTime || data.pickupTime || '08:00 AM',
       return_time: data.returnTime || '04:00 PM',
+      tour_duration: data.tourDuration || 'Not specified',
       itinerary_stops: data.itineraryStops || [],
       itinerary_disclaimer: data.itineraryDisclaimer || 'Times are approximate and may vary based on traffic and weather conditions.',
       
       // ===== INCLUDED / EXCLUDED =====
       included_items: data.includedItems || [],
       excluded_items: data.excludedItems || [],
+      
+      // ===== ESSENTIALS =====
+      dress_code: data.dressCode || 'Not specified',
+      fitness_level: data.fitnessLevel || 'Not specified',
+      age_policy: data.agePolicy || 'Not specified',
+      what_to_bring: data.whatToBring || [],
+      
+      // ===== TOUR HIGHLIGHTS =====
+      tour_highlights: data.tourHighlights || [],
+      tour_description: data.tourDescription || '',
       
       // ===== CANCELLATION =====
       cancellation_policy_text: data.cancellationPolicyText || 'Free cancellation up to 14 days before the tour date. Cancellations within 14 days will receive a credit voucher valid for 12 months. No-shows will be charged in full.',
@@ -503,8 +575,8 @@ export async function sendAdminNotification(data: BookingEmailData, dbConnected:
       // ===== CONTACT =====
       operator_name: data.operatorName || 'Siam Journeys Bangkok',
       operator_phone: data.operatorPhone || '+6692 475 9669',
-      operator_email: data.operatorEmail || 'hello@siamjourneys.com',
-      operator_website: data.operatorWebsite || 'https://siamjourneys.com',
+      operator_email: data.operatorEmail || 'siamjourney.th@gmail.com',
+      operator_website: data.operatorWebsite || 'https://siamjourney-tuktuk-services.netlify.app/',
       
       // ===== FULL ORDER DATA (JSON) =====
       full_order_data: fullOrderData,

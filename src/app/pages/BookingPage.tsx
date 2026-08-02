@@ -55,7 +55,7 @@ interface BookingData {
   tourHighlights?: string[];
   tourIncluded?: string[];
   tourNotIncluded?: string[];
-  tourItinerary?: Array<{ time: string; title: string; description: string }>;
+  tourItinerary?: Array<{ time: string; title: string; description: string; stopMap?: string }>;
   tourEssentials?: {
     dressCode: string;
     fitness: string;
@@ -64,6 +64,14 @@ interface BookingData {
   };
   tourDuration?: string;
   tourStartTime?: string;
+  tourGroupSize?: string;
+  tourCategory?: string;
+  tourBadges?: string[];
+  tourRating?: number;
+  tourReviews?: number;
+  tourHeroImg?: string;
+  tourGalleryImgs?: string[];
+  tourMetaDescription?: string;
 }
 
 interface BookingFormData {
@@ -262,7 +270,39 @@ export function BookingPage() {
     const payload = {
       orderId,
       status: 'PENDING_PAYMENT',
-      bookingDetails: bookingData,
+      bookingDetails: {
+        // Basic booking info
+        tourId: bookingData.tourId,
+        tourName: bookingData.tourName,
+        date: bookingData.date,
+        guests: bookingData.guests,
+        totalPrice: bookingData.totalPrice,
+        pricePerPerson: bookingData.pricePerPerson,
+        isFamilyTrip: bookingData.isFamilyTrip,
+        numberOfFamilies: bookingData.numberOfFamilies,
+        totalAdults: bookingData.totalAdults,
+        totalChildren: bookingData.totalChildren,
+        isGroup: bookingData.isGroup,
+        groupMin: bookingData.groupMin,
+        
+        // ✅ FULL tour data - all fields
+        tourDescription: bookingData.tourDescription,
+        //tourHighlights: bookingData.tourHighlights,
+        tourIncluded: bookingData.tourIncluded,
+        tourNotIncluded: bookingData.tourNotIncluded,
+        tourItinerary: bookingData.tourItinerary,
+        tourEssentials: bookingData.tourEssentials,
+        tourDuration: bookingData.tourDuration,
+        tourStartTime: bookingData.tourStartTime,
+        tourGroupSize: bookingData.tourGroupSize,
+        tourCategory: bookingData.tourCategory,
+        tourBadges: bookingData.tourBadges,
+        //tourRating: bookingData.tourRating,
+        //tourReviews: bookingData.tourReviews,
+        //tourHeroImg: bookingData.tourHeroImg,
+        //tourGalleryImgs: bookingData.tourGalleryImgs,
+        //tourMetaDescription: bookingData.tourMetaDescription,
+      },
       personalInfo: {
         firstName: data.firstName,
         lastName: data.lastName,

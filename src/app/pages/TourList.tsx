@@ -1,4 +1,4 @@
-// TourList.tsx (updated with fallback support)
+// TourList.tsx - Updated with new pricing structure
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -18,9 +18,27 @@ import { TOURS } from "../data/tours";
 const SERIF = "'Playfair Display', Georgia, serif";
 
 // ============ TYPES ============
+interface PricingPackage {
+  key: string;
+  label: string;
+  price: number;
+  adults: number;
+  childrenMin: number;
+  childrenMax: number;
+}
+
+interface Pricing {
+  priceAdult: number;
+  priceChild: number;
+  priceSoloPrivate: number;
+  priceGroup: number;
+  groupMin: number;
+  packages: PricingPackage[];
+}
+
 interface TourTemplate {
   _id: string;
-  id?: string; // Added for compatibility
+  id?: string;
   name: string;
   description: string;
   tagline: string;
@@ -29,8 +47,11 @@ interface TourTemplate {
   start_time: string;
   group_size: string;
   group_min: number;
+  // Old pricing fields (for backward compatibility)
   price_single: number;
   price_group: number;
+  // New pricing structure
+  pricing?: Pricing;
   rating: number;
   reviews: number;
   hero_img: string;
@@ -94,9 +115,13 @@ function CategoryFilter({
 
 function TourCard({ tour }: { tour: TourTemplate }) {
   const navigate = useNavigate();
-
-  // Use _id or id for navigation
   const tourId = tour._id || tour.id;
+
+  // Get pricing data - prefer new pricing structure, fallback to old fields
+  const priceAdult = tour.pricing?.priceAdult ?? tour.price_single ?? 0;
+  const priceGroup = tour.pricing?.priceGroup ?? tour.price_group ?? 0;
+  const groupMin = tour.pricing?.groupMin ?? tour.group_min ?? 4;
+  const packages = tour.pricing?.packages ?? [];
 
   return (
     <div 
@@ -163,33 +188,52 @@ function TourCard({ tour }: { tour: TourTemplate }) {
           </div>
           <div className="flex items-center gap-1.5 text-[12px] text-[#5A5248]">
             <Users size={13} className="text-[#B8952A]" />
-            {tour.group_size || `${tour.group_min || 2}+ people`}
+            {tour.group_size || `${groupMin}+ people`}
           </div>
         </div>
 
-        {/* Price & Action */}
-        <div className="flex items-end justify-between pt-2 border-t border-border">
-          <div>
-            <span className="text-[20px] text-[#2A2824]" style={{ fontFamily: SERIF }}>
-              ฿{tour.price_single?.toLocaleString() || "0"}
-            </span>
-            <span className="text-[12px] text-[#7A6E60] ml-1">/ person</span>
-            {tour.price_group && tour.price_group < tour.price_single && (
-              <p className="text-[11px] text-[#2D4A3E]">
-                Groups {tour.group_min}+: ฿{tour.price_group.toLocaleString()}
-              </p>
-            )}
+        {/* Price & Packages - UPDATED */}
+        <div className="pt-2 border-t border-border">
+          <div className="flex items-end justify-between">
+            <div>
+              <span className="text-[20px] text-[#2A2824]" style={{ fontFamily: SERIF }}>
+                ฿{priceAdult.toLocaleString()}
+              </span>
+              <span className="text-[12px] text-[#7A6E60] ml-1">/ adult</span>
+              {priceGroup > 0 && priceGroup < priceAdult && (
+                <p className="text-[11px] text-[#2D4A3E]">
+                  Groups {groupMin}+: ฿{priceGroup.toLocaleString()}
+                </p>
+              )}
+            </div>
+            <button 
+              className="flex items-center gap-1 text-[11px] tracking-[0.12em] uppercase text-[#B8952A] hover:text-[#A47F22] transition-colors group-hover:gap-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/tours/${tourId}`);
+              }}
+            >
+              View Details
+              <ChevronRight size={14} className="transition-transform group-hover:translate-x-1" />
+            </button>
           </div>
-          <button 
-            className="flex items-center gap-1 text-[11px] tracking-[0.12em] uppercase text-[#B8952A] hover:text-[#A47F22] transition-colors group-hover:gap-2"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/tours/${tourId}`);
-            }}
-          >
-            View Details
-            <ChevronRight size={14} className="transition-transform group-hover:translate-x-1" />
-          </button>
+          
+          {/* Package badges */}
+          {packages.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-border/50">
+              {packages.slice(0, 3).map((pkg) => (
+                <span 
+                  key={pkg.key} 
+                  className="text-[9px] tracking-[0.05em] px-2 py-0.5 bg-[#EDE5D0] text-[#5A5248] rounded"
+                >
+                  {pkg.label}: ฿{pkg.price.toLocaleString()}
+                </span>
+              ))}
+              {packages.length > 3 && (
+                <span className="text-[9px] text-[#7A6E60]">+{packages.length - 3} more</span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -239,8 +283,43 @@ export function TourList() {
       start_time: t.startTime || '09:00',
       group_size: t.groupSize || `${t.groupMin || 2}+ people`,
       group_min: t.groupMin || 4,
+      // Old pricing fields (for backward compatibility)
       price_single: t.priceSingle || 0,
       price_group: t.priceGroup || 0,
+      // New pricing structure - use if available
+      pricing: t.pricing || {
+        priceAdult: t.priceSingle || 0,
+        priceChild: Math.round((t.priceSingle || 0) / 2),
+        priceSoloPrivate: (t.priceSingle || 0) * 2,
+        priceGroup: t.priceGroup || 0,
+        groupMin: t.groupMin || 4,
+        packages: [
+          {
+            key: "family",
+            label: "Family Package",
+            price: t.priceFam || 0,
+            adults: 2,
+            childrenMin: 1,
+            childrenMax: 2
+          },
+          {
+            key: "couple",
+            label: "Comfort Package",
+            price: Math.round((t.priceSingle || 0) * 1.8),
+            adults: 2,
+            childrenMin: 0,
+            childrenMax: 0
+          },
+          {
+            key: "adventure",
+            label: "Adventure Package",
+            price: Math.round((t.priceSingle || 0) * 2.4),
+            adults: 3,
+            childrenMin: 0,
+            childrenMax: 0
+          }
+        ]
+      },
       rating: t.rating || 4.5,
       reviews: t.reviews || 0,
       hero_img: t.img || t.heroImg || 'https://images.unsplash.com/photo-1582468546235-9bf31e5bc4a1?w=800&h=500&fit=crop&auto=format',
