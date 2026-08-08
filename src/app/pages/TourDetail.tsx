@@ -822,7 +822,7 @@ export function TourDetail() {
           <div className="max-w-7xl mx-auto">
             <h1 className="text-[clamp(1.8rem,4vw,3rem)] text-[#FAF7F2] mt-3 mb-2 leading-tight" style={{ fontFamily: SERIF, fontWeight: 400 }}>{tour.name}</h1>
             <p className="text-[#FAF7F2]/70 text-[15px] max-w-xl">{tour.tagline}</p>
-            {usingFallback && <p className="text-[11px] text-[#B8952A] mt-2 italic">⚡ Using sample tour data (offline mode)</p>}
+            {usingFallback && <p className="text-[11px] text-[#B8952A] mt-2 italic">Image from ReadMe</p>}
           </div>
         </div>
       </div>

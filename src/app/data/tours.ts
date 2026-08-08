@@ -189,6 +189,222 @@ export const TOURS: Tour[] = [
     }
 },
 
+{
+    id: "bang-krachao-family-adventure-halfday",
+    category: "local",
+    name: "Bang Krachao – Floating Market (Half day)",
+    tagline: "Family field trip to learn about nature and riverside way of life",
+    duration: "6 hours (07:00 - 13:55 hrs.)",
+    startTime: "07:00 hrs.",
+    groupSize: "Family / Children and Parents",
+    rating: 4.9,
+    reviews: 256,
+    img: "https://plus.unsplash.com/premium_photo-1682098240884-9dfc7bf048f0?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    heroImg: "https://plus.unsplash.com/premium_photo-1682098240884-9dfc7bf048f0?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    galleryImgs: [
+      "https://scontent.fbkk29-9.fna.fbcdn.net/v/t39.30808-6/760523220_1512275324269939_717984993744590829_n.jpg?stp=dst-jpg_tt6&cstp=mx810x1080&ctp=s810x1080&_nc_cat=105&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=833d8c&_nc_ohc=-RrnhmQIB_EQ7kNvwF1IITQ&_nc_oc=Adr14Nd7OxQIQw6nfkVrOmV9WBr-5gLYicaOlPtzGZ487Oul7JBI2flCZsuEx5oyMqo&_nc_zt=23&_nc_ht=scontent.fbkk29-9.fna&_nc_gid=Oj0BNnWb6LlpblzEq1GsGA&_nc_ss=7b289&oh=00_AQG5tVAcTUxxrkI7wX3FQ4awpZYVkBurBOFfmioj_DGmHw&oe=6A7C9272",
+      "https://plus.unsplash.com/premium_photo-1682098240884-9dfc7bf048f0?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "https://trueid-slsapp-storage-prod.s3.ap-southeast-1.amazonaws.com/partner_files/trueidintrend/321947/%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B8%99%E0%B9%89%E0%B8%B3%E0%B8%9C%E0%B8%B6%E0%B9%89%E0%B8%87%E0%B8%99%E0%B8%AD%E0%B8%813.jpg",
+      "https://scontent.fbkk29-6.fna.fbcdn.net/v/t39.30808-6/763684752_1513166944180777_6555594705079644824_n.jpg?stp=dst-jpg_tt6&cstp=mx828x1080&ctp=s828x1080&_nc_cat=104&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=833d8c&_nc_ohc=PXMDW0dkUn8Q7kNvwGfe6lM&_nc_oc=AdoLqK7ZAkk3GRnb9-NGj8nzEi4pm8ysaMTadInEWOhyVNbvlNIkFw5Fuu2SDlTU_TA&_nc_zt=23&_nc_ht=scontent.fbkk29-6.fna&_nc_gid=PRKv1xFZOQs7gtVI_bnJ6w&_nc_ss=7b289&oh=00_AQFgmeoKFPGhtVNAZWseEll6jCe_5xAuENDG8WxGklS3Bg&oe=6A7CA183",
+      "https://trueid-slsapp-storage-prod.s3.ap-southeast-1.amazonaws.com/partner_files/trueidintrend/321947/%E0%B8%A7%E0%B8%B1%E0%B8%94%E0%B8%9A%E0%B8%B2%E0%B8%87%E0%B8%99%E0%B9%89%E0%B8%B3%E0%B8%9C%E0%B8%B6%E0%B9%89%E0%B8%87%E0%B8%99%E0%B8%AD%E0%B8%815.jpg"
+    ],
+    badges: ["Expert guides", "100% safety", "Travel insurance", "Kid-friendly activities"],
+    metaDescription: "Bang Krachao family field trip – Bangkok's Green Lung. Adventure, boat ride, floating market, nature learning, and fun missions for kids.",
+    description: "Bang Krachao - Bang Nam Phueng Floating Market is right in the heart of Bangkok, brimming with nature, riverside way of life, and authentic Thai culture. This trip will take your family on an experience that is both fun and educational — from a boat ride to observe life along the canals, a visit to Wat Bang Nam Phueng Nok, shopping and dining at Bang Nam Phueng Floating Market, to relaxing amidst nature at Café. Along the way, special kids' missions will make this journey even more meaningful.",
+    highlights: [
+      "Learn temple etiquette and Thai art at Wat Bang Nam Phueng Nok",
+      "Bang Nam Phueng Floating Market – eat, shop, and enjoy local community goods",
+      "Boat ride to observe riverside life and nature (1 hour)",
+      "Relax in nature at Deep In Bangkrachao",
+      "Kids'playbook – explore Bangkrachao: find 3 types of leaves, try a new fruit, learn a temple rule, talk to a vendor, and photograph your favorite thing in Bang Krachao",
+      "Bonding activities for the whole family – learn together"
+    ],
+    included: [
+      "Experienced tour guide",
+      "Personal accident insurance",
+      "Kids' mission kit and activity set",
+      "Free drinking water throughout the trip",
+      "Motion sickness medicine / mosquito repellent (prepared)"
+    ],
+    notIncluded: [
+      "Personal meals and beverages",
+      "Boat ride activity fee",
+      "Souvenir purchases",
+      "Personal transportation (private car / rental car)"
+    ],
+    itinerary: [
+      { time: "07:00 - 07:45 hrs.", title: "Baanrak Kindergarten", description: "Meet at Ban Rak Kindergarten, Bangkok. Depart by car to Bang Krachao (approx. 45 minutes)." },
+      { time: "07:45 - 08:15 hrs.", title: "Wat Bang Nam Phueng Nok", description: "Learn temple etiquette, observe Thai artistic heritage, practice respect for sacred places and the community (30 minutes)." },
+      { time: "08:30 - 09:30 hrs.", title: "Boat Ride Activity", description: "Enjoy a boat ride to observe riverside life and nature — spot birds, trees, and houses along the canals (~1 hour) - Additional fee required." },
+      { time: "09:45 - 11:30 hrs.", title: "Bang Nam Phueng Floating Market", description: "Free time for families to enjoy a meal and stroll through the floating market, experience community culture, shop for souvenirs, and complete the kids' missions." },
+      { time: "11:45 - 12:55 hrs.", title: "Deep In Bangkrachao", description: "Lunch, drinks and snacks are available here! Relax in nature before heading back." },
+      { time: "12:55 - 13:55 hrs.", title: "Return: Baanrak Kindergarten", description: "Travel back to Ban Rak Kindergarten safely (approx. 60 minutes)." }
+    ],
+    essentials: {
+      dressCode: "Wear comfortable, breathable clothing and shoes suitable for walking and the boat ride.",
+      fitness: "Easy level – flat terrain with frequent rest stops, suitable for children and seniors.",
+      agePolicy: "Children of all ages are welcome. Children under 12 must be under parental supervision at all times.",
+      prep: [
+        "Personal water bottle",
+        "Hat and sunscreen",
+        "Personal medication / mosquito repellent",
+        "Camera or phone for completing missions",
+        "An open mind to learn and respect nature and the community"
+      ]
+    },
+    pricing: {
+        priceAdult: 990,
+        priceChild: 750,
+        priceSoloPrivate: 2400,
+        priceGroup: 869,
+        groupMin: 9,
+        packages: [
+            {
+                key: "family",
+                label: "Family Package (2 adults + 1-2 children)",
+                price: 2890,
+                adults: 2,
+                childrenMin: 1,
+                childrenMax: 2
+            },
+            {
+                key: "couple",
+                label: "Couple Package / 2 persons (Comfort seat)",
+                price: 2480,
+                adults: 2,
+                childrenMin: 0,
+                childrenMax: 0
+            },
+            {
+                key: "adventure",
+                label: "Friends Package (3 persons)",
+                price: 2670,
+                adults: 3,
+                childrenMin: 0,
+                childrenMax: 0
+            }
+        ]
+    },
+    map: {
+      start: "Ban Rak Kindergarten, Bangkok",
+      stops: [
+        "Wat Bang Nam Phueng Nok",
+        "Boat Pier (Bang Nam Phueng Canal)",
+        "Bang Nam Phueng Floating Market",
+        "Hiddenwoods Café"
+      ],
+      end: "Ban Rak Kindergarten, Bangkok"
+    }
+},
+
+{
+    id: "bang-krachao-family-adventure-fullday",
+    category: "local",
+    name: "Bang Krachao – Adventure in the Green Lung",
+    tagline: "Family field trip to learn about nature and riverside way of life",
+    duration: "~10 hours (07:00 - 16:30 hrs.)",
+    startTime: "07:00 hrs.",
+    groupSize: "Family / Children and Parents",
+    rating: 4.9,
+    reviews: 256,
+    img: "https://asset.readme.me/files/10347/cover.jpg?v=40ff5f52",
+    heroImg: "https://asset.readme.me/files/10347/cover.jpg?v=40ff5f52",
+    galleryImgs: [
+      "https://scontent.fbkk29-9.fna.fbcdn.net/v/t39.30808-6/760523220_1512275324269939_717984993744590829_n.jpg?stp=dst-jpg_tt6&cstp=mx810x1080&ctp=s810x1080&_nc_cat=105&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=833d8c&_nc_ohc=-RrnhmQIB_EQ7kNvwF1IITQ&_nc_oc=Adr14Nd7OxQIQw6nfkVrOmV9WBr-5gLYicaOlPtzGZ487Oul7JBI2flCZsuEx5oyMqo&_nc_zt=23&_nc_ht=scontent.fbkk29-9.fna&_nc_gid=Oj0BNnWb6LlpblzEq1GsGA&_nc_ss=7b289&oh=00_AQG5tVAcTUxxrkI7wX3FQ4awpZYVkBurBOFfmioj_DGmHw&oe=6A7C9272",
+      "https://plus.unsplash.com/premium_photo-1682098240884-9dfc7bf048f0?q=80&w=1770&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "https://images.unsplash.com/photo-1628221556371-ef4c328d9019?q=80&w=1775&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "https://scontent.fbkk29-6.fna.fbcdn.net/v/t39.30808-6/763684752_1513166944180777_6555594705079644824_n.jpg?stp=dst-jpg_tt6&cstp=mx828x1080&ctp=s828x1080&_nc_cat=104&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=833d8c&_nc_ohc=PXMDW0dkUn8Q7kNvwGfe6lM&_nc_oc=AdoLqK7ZAkk3GRnb9-NGj8nzEi4pm8ysaMTadInEWOhyVNbvlNIkFw5Fuu2SDlTU_TA&_nc_zt=23&_nc_ht=scontent.fbkk29-6.fna&_nc_gid=PRKv1xFZOQs7gtVI_bnJ6w&_nc_ss=7b289&oh=00_AQFgmeoKFPGhtVNAZWseEll6jCe_5xAuENDG8WxGklS3Bg&oe=6A7CA183",
+      "https://images.unsplash.com/photo-1533130061792-64a345e0a6d1?w=600&h=420&fit=crop&auto=format"
+    ],
+    badges: ["Expert guides", "100% safety", "Travel insurance", "Kid-friendly activities"],
+    metaDescription: "Bang Krachao family field trip – Bangkok's Green Lung. Adventure, boat ride, floating market, nature learning, and fun missions for kids.",
+    description: "Bang Krachao is a magical green oasis right in the heart of Bangkok, brimming with nature, riverside way of life, and authentic Thai culture. This trip will take your family on an experience that is both fun and educational — from a boat ride to observe life along the canals, a visit to Wat Bang Nam Phueng Nok, shopping and dining at Bang Nam Phueng Floating Market, to relaxing amidst nature at Hiddenwoods Café. Along the way, special kids' missions will make this journey even more meaningful.",
+    highlights: [
+      "Learn temple etiquette and Thai art at Wat Bang Nam Phueng Nok",
+      "Bang Nam Phueng Floating Market – eat, shop, and enjoy local community goods",
+      "Boat ride to observe riverside life and nature (1 hour)",
+      "Relax in nature at Deep In Bangkrachao",
+      "Kids'playbook – explore Bangkrachao: find 3 types of leaves, try a new fruit, learn a temple rule, talk to a vendor, and photograph your favorite thing in Bang Krachao",
+      "Bonding activities for the whole family – learn together"
+    ],
+    included: [
+      "Experienced tour guide",
+      "Personal accident insurance",
+      "Kids' mission kit and activity set",
+      "Free drinking water throughout the trip",
+      "Motion sickness medicine / mosquito repellent (prepared)"
+    ],
+    notIncluded: [
+      "Personal meals and beverages",
+      "Boat ride activity fee",
+      "Souvenir purchases",
+      "Personal transportation (private car / rental car)"
+    ],
+    itinerary: [
+      { time: "07:00 - 07:45 hrs.", title: "Baanrak Kindergarten", description: "Meet at Ban Rak Kindergarten, Bangkok. Depart by car to Bang Krachao (approx. 45 minutes)." },
+      { time: "07:45 - 08:15 hrs.", title: "Wat Bang Nam Phueng Nok", description: "Learn temple etiquette, observe Thai artistic heritage, practice respect for sacred places and the community (30 minutes)." },
+      { time: "08:30 - 09:30 hrs.", title: "Boat Ride Activity", description: "Enjoy a boat ride to observe riverside life and nature — spot birds, trees, and houses along the canals (~1 hour) - Additional fee required." },
+      { time: "09:45 - 11:30 hrs.", title: "Bang Nam Phueng Floating Market", description: "Free time for families to enjoy a meal and stroll through the floating market, experience community culture, shop for souvenirs, and complete the kids' missions." },
+      { time: "11:45 - 12:55 hrs.", title: "Deep In Bangkrachao", description: "Lunch, drinks and snacks are available here! Relax in nature before heading back." },
+      { time: "13:00 - 15:30 hrs.", title: "Sri Nakhon Khuean Khan Park", description: "Explore Bangkok's 'green lung' on foot or by bike! Wander along elevated nature trails through lush mangrove forest, spot monitor lizards, birds, and butterflies, enjoy the peaceful lake views, and relax in the shade of giant trees. A perfect outdoor adventure for kids and families to connect with nature before heading back."},
+      { time: "15:45 - 16:30 hrs.", title: "Return: Baanrak Kindergarten", description: "Travel back to Ban Rak Kindergarten safely (approx. 60 minutes)." }
+    ],
+    essentials: {
+      dressCode: "Wear comfortable, breathable clothing and shoes suitable for walking and the boat ride.",
+      fitness: "Easy level – flat terrain with frequent rest stops, suitable for children and seniors.",
+      agePolicy: "Children of all ages are welcome. Children under 12 must be under parental supervision at all times.",
+      prep: [
+        "Personal water bottle",
+        "Hat and sunscreen",
+        "Personal medication / mosquito repellent",
+        "Camera or phone for completing missions",
+        "An open mind to learn and respect nature and the community"
+      ]
+    },
+    pricing: {
+        priceAdult: 1490,
+        priceChild: 850,
+        priceSoloPrivate: 2690,
+        priceGroup: 1290,
+        groupMin: 9,
+        packages: [
+            {
+                key: "family",
+                label: "Family Package (2 adults + 1-2 children)",
+                price: 3690,
+                adults: 2,
+                childrenMin: 1,
+                childrenMax: 2
+            },
+            {
+                key: "couple",
+                label: "Couple Package / 2 persons (Comfort seat)",
+                price: 2890,
+                adults: 2,
+                childrenMin: 0,
+                childrenMax: 0
+            },
+            {
+                key: "adventure",
+                label: "Friends Package (3 persons)",
+                price: 3576,
+                adults: 3,
+                childrenMin: 0,
+                childrenMax: 0
+            }
+        ]
+    },
+    map: {
+      start: "Ban Rak Kindergarten, Bangkok",
+      stops: [
+        "Wat Bang Nam Phueng Nok",
+        "Boat Pier (Bang Nam Phueng Canal)",
+        "Bang Nam Phueng Floating Market",
+        "Hiddenwoods Café"
+      ],
+      end: "Ban Rak Kindergarten, Bangkok"
+    }
+},
 
 {
     id: "dawn-at-the-flower-market",
@@ -200,11 +416,11 @@ export const TOURS: Tour[] = [
     groupSize: "Max 8 guests",
     rating: 4.8,
     reviews: 156,
-    img: "https://images.unsplash.com/photo-1595632798355-61f1a6f99c37?w=800&h=520&fit=crop&auto=format",
-    heroImg: "https://images.unsplash.com/photo-1595632798355-61f1a6f99c37?w=1600&h=700&fit=crop&auto=format",
+    img: "https://img.wongnai.com/p/400x0/2025/04/13/0a4602c9e0ad4b96a3f7a169aa6706d8.jpg",
+    heroImg: "https://img.wongnai.com/p/400x0/2025/04/13/0a4602c9e0ad4b96a3f7a169aa6706d8.jpg",
     galleryImgs: [
-      "https://images.unsplash.com/photo-1595632798355-61f1a6f99c37?w=600&h=420&fit=crop&auto=format",
-      "https://images.unsplash.com/photo-1591233244187-ffd622c51fbd?w=600&h=420&fit=crop&auto=format",
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSZQEnXeWUXbmBOX_Q27WMU3tRUhZoTJmUEGC5nvZHzlKMB7m3MT3m4i2G5&s=10",
+      "https://today-obs.line-scdn.net/0hXNkYj_UnB2FWIBTK-7p4Nm52CxBlRh1odBQfU3YkCVZ5DEcwbBFUAiYiUE0oE0kwdhFBUyEpDFN_FBViPw/w1200",
     ],
     badges: ["Expert Guide", "Small Group Policy", "Fully Insured"],
     metaDescription: "Join Siam Journeys at Bangkok's Pak Khlong Talat flower market before sunrise — the city's most sensory experience. 3-hour morning tour from 799 THB.",
@@ -217,13 +433,11 @@ export const TOURS: Tour[] = [
       "Traditional Thai breakfast with the market vendors",
     ],
     included: [
-      "Licensed TAT guide",
       "Tuk-tuk transportation",
-      "Traditional Thai breakfast",
       "Bottled water",
-      "Personal accident insurance",
+      "Personal accident insurance"
     ],
-    notIncluded: ["Flower or souvenir purchases", "Gratuities"],
+    notIncluded: ["Flower or souvenir purchases", "Traditional Thai breakfast", "Gratuities"],
     itinerary: [
       { time: "5:30 AM", title: "Pre-Dawn Departure", description: "Convoy departs in the dark. Your guide orients you to the pre-dawn rhythms of the canal district." },
       { time: "5:45 AM", title: "Pak Khlong Talat — Deep Access", description: "Enter the inner aisles of the wholesale market — areas not accessible to standard tours — and meet the jasmine weavers your guide has known for years." },
@@ -388,7 +602,6 @@ export const TOURS: Tour[] = [
       "A 100-year-old Chinese-Thai coffee house",
     ],
     included: [
-      "Licensed TAT guide (Chinese-Thai heritage)",
       "Five street food tastings",
       "Traditional Thai-Chinese iced coffee",
       "Personal accident insurance",
@@ -532,92 +745,7 @@ export const TOURS: Tour[] = [
         ]
     }
 },
-{
-    id: "local-neighborhood-discovery",
-    category: "local",
-    name: "Local Neighbourhood Discovery",
-    tagline: "The Bangkok that locals actually live in — by tuk-tuk, on foot, and by canal boat",
-    duration: "4 Hours",
-    startTime: "9:00 AM",
-    groupSize: "Max 8 guests",
-    rating: 4.9,
-    reviews: 178,
-    img: "https://images.unsplash.com/photo-1615619825440-f18cea64b00e?w=800&h=520&fit=crop&auto=format",
-    heroImg: "https://images.unsplash.com/photo-1615619825440-f18cea64b00e?w=1600&h=700&fit=crop&auto=format",
-    galleryImgs: [
-      "https://images.unsplash.com/photo-1615619825440-f18cea64b00e?w=600&h=420&fit=crop&auto=format",
-      "https://images.unsplash.com/photo-1591233244187-ffd622c51fbd?w=600&h=420&fit=crop&auto=format",
-    ],
-    badges: ["Expert Guide", "Small Group Policy", "Fully Insured"],
-    metaDescription: "Explore the real Bangkok — Phra Khanong, On Nut, and the canal communities — with a local guide on tuk-tuk and canal boat. From 999 THB. Siam Journeys.",
-    description: "There is a Bangkok that travel writing almost never covers: the neighbourhood Bangkok of the city's two million working residents. This four-hour experience takes a small group by tuk-tuk convoy into Phra Khanong — a district of independent coffee shops, fresh markets, traditional herbalists, and canal communities — where the pace is entirely different from the tourist centre. Your guide was born here. The people you meet are her neighbours. The food you eat is what she ate for breakfast this morning.",
-    highlights: [
-      "Phra Khanong local wet market with a neighbourhood guide",
-      "Canal-boat ride through the klong community network",
-      "Independent Thai coffee roastery visit",
-      "Traditional herbalist and apothecary",
-      "Casual Thai lunch at a vendor stall",
-    ],
-    included: [
-      "Licensed local guide (Phra Khanong native)",
-      "Tuk-tuk transportation and canal-boat fare",
-      "Coffee roastery tasting",
-      "Casual Thai lunch",
-      "Bottled water",
-      "Personal accident insurance",
-    ],
-    notIncluded: ["Market purchases", "Gratuities"],
-    itinerary: [
-      { time: "9:00 AM", title: "Departure from On Nut BTS", description: "Meet at On Nut station — an easy BTS ride from central Bangkok — and convoy into the neighbourhood by tuk-tuk." },
-      { time: "9:20 AM", title: "Phra Khanong Wet Market", description: "A working neighbourhood market with no tourist presence. Your guide introduces the vendors, explains the ingredients, and describes how a Thai household shops." },
-      { time: "10:30 AM", title: "Canal Community by Boat", description: "Board a longtail canal boat and traverse the klong network that once served as Bangkok's road system. Your guide points out canal-house communities, spirit houses, and the changing ecology of the waterways." },
-      { time: "11:30 AM", title: "Coffee Roastery & Herbalist", description: "Visit a small-batch Thai coffee roastery for a guided tasting, then a traditional herbalist whose family has operated in the same location for 80 years." },
-      { time: "12:30 PM", title: "Casual Thai Lunch & Return", description: "Lunch at a vendor stall chosen by your guide, then tuk-tuk convoy returns to On Nut BTS. Tour concludes." },
-    ],
-    essentials: {
-      dressCode: "Comfortable, casual clothing. There are no temple visits on this route — no dress code restrictions apply.",
-      fitness: "Easy. Flat walking in a neighbourhood environment, approximately 2 km. Canal boat involves boarding a low-sided longtail — comfortable shoes with grip recommended.",
-      agePolicy: "All ages welcome. Children must be accompanied by a parent or guardian on the canal boat.",
-      prep: [
-        "Reusable water bottle",
-        "Small amount of cash for market or vendor purchases",
-        "Camera — the canal communities are photogenic",
-      ],
-    },
-    pricing: {
-        priceAdult: 999,
-        priceChild: 500,
-        priceSoloPrivate: 2000,
-        priceGroup: 849,
-        groupMin: 6,
-        packages: [
-            {
-                key: "family",
-                label: "Family Package",
-                price: 2000,
-                adults: 2,
-                childrenMin: 1,
-                childrenMax: 2
-            },
-            {
-                key: "couple",
-                label: "Comfort Package",
-                price: 1820,
-                adults: 2,
-                childrenMin: 0,
-                childrenMax: 0
-            },
-            {
-                key: "adventure",
-                label: "Adventure Package",
-                price: 2400,
-                adults: 3,
-                childrenMin: 0,
-                childrenMax: 0
-            }
-        ]
-    }
-},
+
 ];
 
 export const CATEGORIES: { id: Category | "all"; label: string }[] = [
