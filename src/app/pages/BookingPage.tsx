@@ -1,6 +1,7 @@
 // src/pages/BookingPage.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { getPromptPayQrUrl, formatPromptPayId } from "../../utils/promptpay";
 
 // Get API URL based on environment
 const API_BASE_URL = import.meta.env.PROD ? '' : (import.meta.env.VITE_API_URL || 'http://localhost:5001');
@@ -31,6 +32,19 @@ import {
 } from "lucide-react";
 
 const SERIF = "'Playfair Display', Georgia, serif";
+
+// 🔧 TODO: Replace with your business's real PromptPay-registered ID.
+// Accepts a 10-digit mobile number ("0812345678"), a 13-digit citizen/tax ID,
+// or a 15-digit e-Wallet ID. This is the account that receives the payment.
+const PROMPTPAY_ID = "0841355996";
+
+// 🔧 TODO: Replace with the name registered to that PromptPay ID.
+// Note: this is just for display so payers can double-check the recipient
+// before paying — the QR code itself doesn't carry a name. Thai banking
+// apps will also show the real registered name once the code is scanned,
+// so make sure this matches (it may differ from your bank account name,
+// e.g. if PromptPay is registered under an owner's personal ID).
+const PROMPTPAY_ACCOUNT_NAME = "Kanjanee S.";
 
 interface BookingData {
   // Basic booking info
@@ -158,6 +172,8 @@ export function BookingPage() {
   const [dbStatus, setDbStatus] = useState<'idle' | 'saving' | 'saved' | 'error' | 'offline'>('idle');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isDbConnected, setIsDbConnected] = useState<boolean>(true);
+  const [qrLoaded, setQrLoaded] = useState(false);
+  const [qrLoadFailed, setQrLoadFailed] = useState(false);
 
   const {
     tourName,
@@ -173,6 +189,15 @@ export function BookingPage() {
     isGroup,
     groupMin,
   } = bookingData;
+
+  // ─── PROMPTPAY QR CODE ───────────────────────────────────────────────────
+  // Pre-fills the exact amount so the payer can't send the wrong sum.
+  const promptPayQrUrl = getPromptPayQrUrl(PROMPTPAY_ID, totalPrice);
+
+  useEffect(() => {
+    setQrLoaded(false);
+    setQrLoadFailed(false);
+  }, [promptPayQrUrl]);
 
   const validateStep1 = () => {
     const newErrors: Record<string, string> = {};
@@ -590,43 +615,62 @@ export function BookingPage() {
                 <QrCode size={32} className="text-[#2A2824]" />
               </div>
               <h2 className="text-[24px] text-[#2A2824]" style={{ fontFamily: SERIF, fontWeight: 400 }}>
-                Pay via Bank Transfer
+                Scan to Pay with PromptPay
               </h2>
               <p className="text-[13px] text-[#7A6E60] mt-2">
-                Use the QR code or bank details below to complete your payment
+                Scan the QR code below with your banking app to complete your payment
               </p>
               <p className="text-[12px] text-[#B8952A] mt-1">
                 Your booking is reserved for 30 minutes
               </p>
             </div>
 
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-center mb-3">
               <div className="border-2 border-border p-4 bg-white">
-                <div className="w-48 h-48 bg-[#2A2824] flex items-center justify-center">
-                  <div className="text-[#FAF7F2] text-center">
-                    <QrCode size={80} className="mx-auto mb-2" />
-                    <p className="text-[10px] opacity-70">Scan to Pay</p>
-                  </div>
+                <div className="w-64 h-64 flex items-center justify-center relative">
+                  {qrLoadFailed ? (
+                    <div className="w-full h-full bg-[#EDE5D0] flex flex-col items-center justify-center text-center p-6">
+                      <AlertCircle size={28} className="text-[#B8952A] mb-2" />
+                      <p className="text-[12px] text-[#5A5248]">
+                        Couldn't load the QR code. Please use the PromptPay number or bank details below instead.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {!qrLoaded && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white">
+                          <Loader2 size={28} className="animate-spin text-[#B8952A]" />
+                        </div>
+                      )}
+                      <img
+                        src={promptPayQrUrl}
+                        alt={`PromptPay QR code to pay ฿${totalPrice.toLocaleString()}`}
+                        className="w-full h-full object-contain"
+                        onLoad={() => setQrLoaded(true)}
+                        onError={() => setQrLoadFailed(true)}
+                      />
+                    </>
+                  )}
                 </div>
               </div>
             </div>
+            <p className="text-center text-[11px] text-[#7A6E60] mb-8">
+              Scan with any Thai banking app (K PLUS, SCB EASY, etc.) — the amount is pre-filled
+            </p>
 
             <div className="bg-[#EDE5D0] p-6 space-y-3 mb-8">
               <div className="flex justify-between items-center">
-                <span className="text-[#5A5248] text-[13px]">Bank</span>
-                <span className="text-[#2A2824] font-medium">{bankAccount.bank}</span>
-              </div>
-              <div className="flex justify-between items-center">
                 <span className="text-[#5A5248] text-[13px]">Account Name</span>
-                <span className="text-[#2A2824] font-medium">{bankAccount.accountName}</span>
+                <span className="text-[#2A2824] font-medium">{PROMPTPAY_ACCOUNT_NAME}</span>
               </div>
-              <div className="flex justify-between items-center group">
-                <span className="text-[#5A5248] text-[13px]">Account Number</span>
+              <div className="flex justify-between items-center group border-t border-border/50 pt-3">
+                <span className="text-[#5A5248] text-[13px]">PromptPay Number</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-[#2A2824] font-medium font-mono">{bankAccount.accountNumber}</span>
+                  <span className="text-[#2A2824] font-medium font-mono">{formatPromptPayId(PROMPTPAY_ID)}</span>
                   <button
-                    onClick={() => copyToClipboard(bankAccount.accountNumber)}
+                    onClick={() => copyToClipboard(PROMPTPAY_ID)}
                     className="text-[#7A6E60] hover:text-[#B8952A] transition-colors"
+                    title="Copy PromptPay number"
                   >
                     {copied ? <Check size={16} /> : <Copy size={16} />}
                   </button>
@@ -638,6 +682,35 @@ export function BookingPage() {
                   ฿{totalPrice.toLocaleString()}
                 </span>
               </div>
+              <details className="pt-2 group/details">
+                <summary className="text-[12px] text-[#7A6E60] hover:text-[#B8952A] cursor-pointer transition-colors list-none flex items-center gap-1">
+                  <ChevronRight size={12} className="transition-transform group-open/details:rotate-90" />
+                  Prefer a manual bank transfer instead?
+                </summary>
+                <div className="mt-3 space-y-3 pl-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#5A5248] text-[13px]">Bank</span>
+                    <span className="text-[#2A2824] font-medium">{bankAccount.bank}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#5A5248] text-[13px]">Account Name</span>
+                    <span className="text-[#2A2824] font-medium">{bankAccount.accountName}</span>
+                  </div>
+                  <div className="flex justify-between items-center group">
+                    <span className="text-[#5A5248] text-[13px]">Account Number</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[#2A2824] font-medium font-mono">{bankAccount.accountNumber}</span>
+                      <button
+                        onClick={() => copyToClipboard(bankAccount.accountNumber)}
+                        className="text-[#7A6E60] hover:text-[#B8952A] transition-colors"
+                        title="Copy account number"
+                      >
+                        {copied ? <Check size={16} /> : <Copy size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </details>
             </div>
 
             <div className="bg-[#FAF7F2] p-4 mb-8 border border-border">
